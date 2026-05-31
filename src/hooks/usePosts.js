@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SEED_POSTS } from '../data/seedPosts.js';
 
-// 🌟 より安定した新しいデータ置き場に更新しました！
-const SHARE_API_URL = 'https://api.jsonstorage.net/v1/json/00000000-0000-0000-0000-000000000000/00000000-0000-0000-0000-000000000000';
 const LOCAL_STORAGE_KEY = 'mood-log-posts-backup';
+const API_URL = 'https://api.jsonbin.io/v3/b/6659ee7cacd3cb34a8b03043';
+const MASTER_KEY = '$2a$10$wE1M2R.SInq04Wkbyr2YzeN/X3t82kGqC3v26qreG7U1pG5jHeNre';
 
 const getInitialPosts = () => {
   return [...SEED_POSTS].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -16,9 +16,9 @@ export function usePosts() {
   useEffect(() => {
     async function fetchGlobalPosts() {
       try {
-        const response = await fetch('https://api.jsonbin.io/v3/b/6659ee7cacd3cb34a8b03043/latest', {
+        const response = await fetch(`${API_URL}/latest`, {
           headers: {
-            'X-Master-Key': '$2a$10$wE1M2R.SInq04Wkbyr2YzeN/X3t82kGqC3v26qreG7U1pG5jHeNre',
+            'X-Master-Key': MASTER_KEY,
             'X-Bin-Meta': 'false'
           }
         });
@@ -63,8 +63,8 @@ export function usePosts() {
 
     try {
       // 現在の最新データを取得
-      const response = await fetch('https://api.jsonbin.io/v3/b/6659ee7cacd3cb34a8b03043/latest', {
-        headers: { 'X-Master-Key': '$2a$10$wE1M2R.SInq04Wkbyr2YzeN/X3t82kGqC3v26qreG7U1pG5jHeNre', 'X-Bin-Meta': 'false' }
+      const response = await fetch(`${API_URL}/latest`, {
+        headers: { 'X-Master-Key': MASTER_KEY, 'X-Bin-Meta': 'false' }
       });
       let currentGlobal = [];
       if (response.ok) {
@@ -76,11 +76,11 @@ export function usePosts() {
       const limited = toSave.slice(0, 50); // 重くならないよう50件に制限
 
       // データを上書き保存
-      await fetch('https://api.jsonbin.io/v3/b/6659ee7cacd3cb34a8b03043', {
+      await fetch(API_URL, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-Master-Key': '$2a$10$wE1M2R.SInq04Wkbyr2YzeN/X3t82kGqC3v26qreG7U1pG5jHeNre'
+          'X-Master-Key': MASTER_KEY
         },
         body: JSON.stringify(limited),
       });
