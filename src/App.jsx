@@ -5,38 +5,61 @@ import { usePosts } from './hooks/usePosts.js';
 import { generatePalette } from './utils/generateColors.js';
 
 export default function App() {
+  // usePostsからデータを取り出します
   const { posts, addPost } = usePosts();
   const [palette] = useState(() => generatePalette());
 
-  const myPosts = posts.filter(p => p.author === 'me');
-  const everyoneElsePosts = posts.filter(p => p.author !== 'me');
+  // 🔴【不具合修正】postsが空、または配列以外の時でも絶対にエラーにしないための防御処理
+  const safePosts = Array.isArray(posts) ? posts : [];
+
+  // 自分の投稿と、他人の投稿（リアルタイム分 ＋ 初期データ）を完全に左右に分ける
+  const myPosts = safePosts.filter(p => p && p.author === 'me');
+  const everyoneElsePosts = safePosts.filter(p => p && p.author !== 'me');
 
   const handlePost = useCallback((data) => {
-    addPost(data);
+    if (typeof addPost === 'function') {
+      addPost(data);
+    }
   }, [addPost]);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#fdfdfd', padding: '40px 20px', fontFamily: 'sans-serif' }}>
-      <header style={{ marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '300', color: '#555', letterSpacing: '2px' }}>こころの色</h1>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#fdfdfd',
+      color: '#333333',
+      padding: '40px 20px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
+    }}>
+      <header style={{ marginBottom: '50px', paddingLeft: '10px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: '300', letterSpacing: '4px', color: '#555' }}>こころの色</h1>
       </header>
 
-      <main style={{ display: 'flex', maxWidth: '1200px', margin: '0 auto', gap: '40px' }}>
-        {/* 左側：自分 */}
-        <section style={{ flex: '1' }}>
-          <h2 style={{ fontSize: '13px', color: '#888', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '6px' }}>あなたのきろく</h2>
-          <div style={{ marginBottom: '20px' }}>
+      <main style={{
+        display: 'flex',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        gap: '50px',
+        alignItems: 'flex-start'
+      }}>
+        {/* 左側：自分の記録 */}
+        <section style={{ flex: '1', minWidth: '280px' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: '400', letterSpacing: '2px', color: '#888', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '6px' }}>
+            あなたのきろく
+          </h2>
+          <div style={{ marginBottom: '30px' }}>
             <PostComposer palette={palette} onPost={handlePost} />
           </div>
           <PostFeed posts={myPosts} />
         </section>
 
-        {/* 真ん中の線 */}
-        <div style={{ width: '1px', backgroundColor: '#eee', alignSelf: 'stretch' }} />
+        {/* 中央の境界線 */}
+        <div style={{ width: '1px', backgroundColor: '#ebebeb', alignSelf: 'stretch' }} />
 
-        {/* 右側：みんな（リアルタイム） */}
-        <section style={{ flex: '1' }}>
-          <h2 style={{ fontSize: '13px', color: '#888', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '6px' }}>みんなのきろく（リアルタイム）</h2>
+        {/* 右側：みんなの記録 */}
+        <section style={{ flex: '1', minWidth: '280px' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: '400', letterSpacing: '2px', color: '#888', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '6px' }}>
+            みんなのきろく（リアルタイム）
+          </h2>
           <PostFeed posts={everyoneElsePosts} />
         </section>
       </main>
