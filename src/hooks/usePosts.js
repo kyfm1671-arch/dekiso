@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SEED_POSTS } from '../data/seedPosts.js';
 
-const LOCAL_STORAGE_KEY = 'mood-log-posts-backup';
-// 🌟 セキュリティ制限を解除した、あなた専用の新しいデータ置き場です！
-const API_URL = 'https://api.jsonstorage.net/v1/json/113ed739-bf88-4db8-8b5e-436f56fa6830/624ec77a-fb88-4f05-8e79-506d860e6f21';
+// 🌟授業用・リアルタイム超高速データ共有の通り道
+const API_URL = 'https://api.restful-api.dev/objects';
+const GROUP_KEY = 'mood-log-class-2026'; // 授業用の識別キー
 
 const getInitialPosts = () => {
   return [...SEED_POSTS].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -12,76 +12,77 @@ const getInitialPosts = () => {
 export function usePosts() {
   const [posts, setPosts] = useState(getInitialPosts);
 
-  // 1. ネット上から「みんなの記録」を読み込む
-  useEffect(() => {
-    async function fetchGlobalPosts() {
-      try {
-        const response = await fetch(API_URL);
-        if (response.ok) {
-          const globalPosts = await response.json();
-          if (Array.isArray(globalPosts) && globalPosts.length > 0) {
-            const merged = [...globalPosts, ...SEED_POSTS];
-            const unique = Array.from(new Map(merged.map(p => [p.id, p])).values());
-            setPosts(unique.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-            return;
-          }
+  // 1. サーバーから最新の「みんなの記録」を読み込む関数
+  const fetchGlobalPosts = useCallback(async () => {
+    try {
+      const response = await fetch(API_URL);
+      if (response.ok) {
+        const rawData = await response.json();
+        
+        // このアプリ（授業用キー）のデータだけをフィルターして抽出
+        const globalPosts = rawData
+          .filter(item => item.name === GROUP_KEY && item.data)
+          .map(item => ({
+            id: item.id,
+            colorHex: item.data.colorHex,
+            tags: item.data.tags,
+            createdAt: item.data.createdAt,
+            author: 'someone'
+          }));
+
+        if (globalPosts.length > 0) {
+          // 初期データ（シードデータ）と合流させて、新しい順に並べる
+          const merged = [...globalPosts, ...SEED_POSTS];
+          const unique = Array.from(new Map(merged.map(p => [p.id, p])).values());
+          setPosts(unique.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
         }
-      } catch (error) {
-        console.log("読み込み失敗、ローカルを使います", error);
       }
-
-      const local = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (local) {
-        try { setPosts(JSON.parse(local)); } catch { /* ignore */ }
-      }
+    } catch (error) {
+      console.log("データ取得失敗、またはデータがまだありません", error);
     }
-
-    fetchGlobalPosts();
   }, []);
 
-  // 2. 投稿した時に、ネット上に保存する
+  // アプリを開いた時にデータを読み込み、さらに3秒ごとに自動で画面を最新にする（リアルタイム化）
+  useEffect(() => {
+    fetchGlobalPosts();
+    const interval = setInterval(fetchGlobalPosts, 3000); // 3秒ごとに勝手に更新される
+    return () => clearInterval(interval);
+  }, [fetchGlobalPosts]);
+
+  // 2. 投稿した時に、サーバーに一瞬で送信する
   const addPost = useCallback(async ({ colorHex, tags }) => {
-    const newPost = {
-      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    const newPostData = {
       colorHex,
       tags,
       createdAt: new Date().toISOString(),
-      author: 'someone',
     };
 
-    let updatedPosts = [];
-    setPosts((prev) => {
-      updatedPosts = [newPost, ...prev];
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedPosts));
-      return updatedPosts;
-    });
+    // 自分の画面にサッと先に反映して「余白」を保つ
+    const tempId = `me-${Date.now()}`;
+    setPosts((prev) => [
+      { id: tempId, ...newPostData, author: 'me' },
+      ...prev
+    ]);
 
     try {
-      // 現在の最新データを取得
-      const response = await fetch(API_URL);
-      let currentGlobal = [];
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) currentGlobal = data;
-      }
-      
-      const toSave = [newPost, ...currentGlobal].filter(p => !SEED_POSTS.some(s => s.id === p.id));
-      const limited = toSave.slice(0, 50); // 50件に制限
-
-      // データを上書き保存
+      // ネット上の共有サーバーに送信
       await fetch(API_URL, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        body: JSON.stringify(limited),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: GROUP_KEY, // 授業用の部屋に投げ込む
+          data: newPostData
+        }),
       });
+      
+      // 送信完了したら、即座にサーバーの最新状態を再読み込み
+      fetchGlobalPosts();
     } catch (error) {
-      console.error("保存失敗", error);
+      console.error("サーバーへの送信に失敗しました", error);
     }
 
-    return newPost;
-  }, []);
+    return { id: tempId, ...newPostData, author: 'me' };
+  }, [fetchGlobalPosts]);
 
   return { posts, addPost };
 }
