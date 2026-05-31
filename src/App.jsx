@@ -9,7 +9,7 @@ export default function App() {
   const [palette] = useState(() => generatePalette());
   const [screen, setScreen] = useState('record');
 
-  // 1. データを「自分の記録」と「みんなの記録」に綺麗に分ける
+  // 1. データを「自分の記録」と「みんなの記録」に綺麗に分ける（ここを活かします！）
   const myPosts = posts.filter((p) => p.author === 'me');
   const everyoneElsePosts = posts.filter((p) => p.author !== 'me');
 
@@ -51,7 +51,7 @@ export default function App() {
                 </h2>
                 <PostFeed posts={myPosts} />
                 
-                {/* 記録画面に戻るボタンが押しづらくならないよう、下に少し余白をあけます */}
+                {/* 記録画面に戻るボタン */}
                 <div style={{ marginTop: '30px', textAlign: 'left' }}>
                   <button 
                     onClick={() => setScreen('record')}
