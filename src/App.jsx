@@ -33,28 +33,32 @@ export default function App() {
             <PostComposer colors={palette} onPost={handlePost} />
           ) : (
             
-            /* 【参照画面（feed）】スマホの画面に100%収まるレスポンシブレイアウト */
+            /* 【参照画面（feed）】スマホでも絶対に横並びをキープするレイアウト */
             <div style={{
               display: 'flex',
-              flexWrap: 'wrap', // 🌟スマホの時は自動で縦並びに切り替える魔法
+              flexWrap: 'nowrap', // 🌟 絶対に縦に折り返さない（横並びを死守する）魔法
               maxWidth: '1200px',
               margin: '0 auto',
-              gap: '20px',      // 🌟距離を 60px から「20px」へ大幅に小さくして左に寄せました
-              padding: '0 15px'
+              gap: '12px',        // 🌟 距離を限界まで縮めて「12px」に。みんなの記録が左に寄ります
+              padding: '0 8px',   // 左右の端の余白も少し削って画面を広く使います
+              width: '100%',
+              boxSizing: 'border-box'
             }}>
               
-              {/* 左側：あなたのきろく */}
+              {/* 左側：あなたのきろく（画面の約半分を使う） */}
               <section style={{ 
-                flex: '1 1 280px', // 🌟最小幅を縮めてスマホの画面内に収めます
+                flex: '1', 
+                width: '50%',     // 🌟 スマホ画面のちょうど半分の幅に設定
+                minWidth: '0',     // 横へのはみ出しを強制ストップする設定
                 textAlign: 'left'
               }}>
-                <h2 style={{ fontSize: '13px', fontWeight: '400', letterSpacing: '2px', color: '#888', marginBottom: '16px', borderBottom: '1px solid #eaeaea', paddingBottom: '8px' }}>
+                <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                   あなたのきろく
                 </h2>
                 <PostFeed posts={myPosts} />
                 
                 {/* 戻るボタン */}
-                <div style={{ marginTop: '24px' }}>
+                <div style={{ marginTop: '20px' }}>
                   <button 
                     onClick={() => setScreen('record')}
                     style={{
@@ -62,7 +66,7 @@ export default function App() {
                       border: 'none',
                       color: '#888',
                       cursor: 'pointer',
-                      fontSize: '13px',
+                      fontSize: '12px',
                       textDecoration: 'underline',
                       padding: '0'
                     }}
@@ -72,12 +76,14 @@ export default function App() {
                 </div>
               </section>
 
-              {/* 右側：みんなのきろく */}
+              {/* 右側：みんなのきろく（残りの半分を使う） */}
               <section style={{ 
-                flex: '1 1 280px', // 🌟こちらもスマホ幅にフィットさせます
+                flex: '1', 
+                width: '50%',     // 🌟 スマホ画面のちょうど半分の幅に設定
+                minWidth: '0',     // 横へのはみ出しを強制ストップする設定
                 textAlign: 'left'
               }}>
-                <h2 style={{ fontSize: '13px', fontWeight: '400', letterSpacing: '2px', color: '#888', marginBottom: '16px', borderBottom: '1px solid #eaeaea', paddingBottom: '8px' }}>
+                <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                   みんなのきろく（リアルタイム）
                 </h2>
                 <PostFeed posts={everyoneElsePosts} />
