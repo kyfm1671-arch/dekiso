@@ -3,8 +3,17 @@ import { SEED_POSTS } from '../data/seedPosts.js';
 
 const STORAGE_KEY = 'mood-log-posts-local-solid';
 
-// ランダムに降らせるダミーの色リスト
-const DUMMY_COLORS = ['#FF8B8B', '#FFD166', '#06D6A0', '#118AB2', '#073B4C', '#A8DADC', '#457B9D', '#E63946', '#DDA15E', '#9B5DE5'];
+// 🌟 ダミー投稿用の「色」と、それにぴったり合う「言葉（タグ）」の組み合わせリスト
+const DUMMY_POOL = [
+  { color: '#FF8B8B', tags: ['わくわく', 'たのしい'] },
+  { color: '#FFD166', tags: ['おなかへった', '天気'] },
+  { color: '#06D6A0', tags: ['おちつく', 'のんびり'] },
+  { color: '#118AB2', tags: ['冷静', '集中'] },
+  { color: '#073B4C', tags: ['ねむい', 'つかれた'] },
+  { color: '#E63946', tags: ['きんちょう', 'どきどき'] },
+  { color: '#9B5DE5', tags: ['おもしろい', 'ひらめき'] },
+  { color: '#A8DADC', tags: ['やすみ', '移動'] }
+];
 
 function loadLocal() {
   try {
@@ -15,29 +24,30 @@ function loadLocal() {
 
 export function usePosts() {
   const [myPosts, setMyPosts] = useState(loadLocal);
-  // 最初は初期データ（SEED_POSTS）を入れておきます
   const [allPosts, setAllPosts] = useState(() => {
     const local = loadLocal();
     return [...local, ...SEED_POSTS];
   });
 
-  // 🌟 15秒ごとに、画面を100%確実に自動更新させる強力なタイマー
+  // 🌟 15秒ごとに、色とタグをセットでランダムに降らせる魔法
   useEffect(() => {
     const timer = setInterval(() => {
-      const randomColor = DUMMY_COLORS[Math.floor(Math.random() * DUMMY_COLORS.length)];
+      // プールの中からランダムに1つのセット（色とタグの候補）を選びます
+      const randomSet = DUMMY_POOL[Math.floor(Math.random() * DUMMY_POOL.length)];
+      // そのセットが持っているタグの中から、さらにランダムで1つをピックアップします
+      const randomTag = randomSet.tags[Math.floor(Math.random() * randomSet.tags.length)];
       
       const newDummy = {
         id: `dummy-${Date.now()}`,
-        colorHex: randomColor,
-        tags: [], // タグなし
+        colorHex: randomSet.color,
+        tags: [randomTag], // 🌟 選ばれたタグをしっかり配列に入れてくっつけます
         createdAt: new Date().toISOString(),
-        author: 'someone' // みんなの記録用
+        author: 'someone'
       };
 
-      // 🌟 新しい配列を完全に作り直してセットすることで、Reactに画面の更新を強制します！
+      // 画面の書き換えをReactに強制させて、自動で降らせます
       setAllPosts(prev => {
         const next = [newDummy, ...prev];
-        // 時間順に綺麗に並び替える
         return next.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       });
     }, 15000); // 15秒ごと
@@ -57,20 +67,17 @@ export function usePosts() {
       author: 'me'
     };
 
-    // 自分の端末に即座に保存
     setMyPosts(prev => {
       const next = [newPost, ...prev];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
 
-    // 🌟 自分の投稿も即座に画面全体のリストにガチッと割り込ませます
     setAllPosts(prev => [newPost, ...prev]);
 
     return newPost;
   }, []);
 
-  // 重複を綺麗に削ぎ落として最終出力
   const uniquePosts = Array.from(new Map(allPosts.map(p => [p.id, p])).values());
 
   return { posts: uniquePosts, addPost };
