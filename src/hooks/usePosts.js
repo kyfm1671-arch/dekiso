@@ -3,7 +3,7 @@ import { SEED_POSTS } from '../data/seedPosts.js';
 
 const STORAGE_KEY = 'mood-log-posts-local-solid';
 
-// 🌟ランダムに降らせるダミーの色と、今回の「タグなし」に合わせた空のタグ
+// ランダムに降らせるダミーの色リスト
 const DUMMY_COLORS = ['#FF8B8B', '#FFD166', '#06D6A0', '#118AB2', '#073B4C', '#A8DADC', '#457B9D', '#E63946', '#DDA15E', '#9B5DE5'];
 
 function loadLocal() {
@@ -15,37 +15,37 @@ function loadLocal() {
 
 export function usePosts() {
   const [myPosts, setMyPosts] = useState(loadLocal);
-  // 🌟自動で増えていくみんなのきろく（ダミー用）
-  const [dummyPosts, setDummyPosts] = useState([]);
+  // 最初は初期データ（SEED_POSTS）を入れておきます
+  const [allPosts, setAllPosts] = useState(() => {
+    const local = loadLocal();
+    return [...local, ...SEED_POSTS];
+  });
 
-  // 1. 15秒ごとに、自動で「誰かの記録」を1件ずつ作成して上に追加していく魔法
+  // 🌟 15秒ごとに、画面を100%確実に自動更新させる強力なタイマー
   useEffect(() => {
-    const createDummyPost = () => {
+    const timer = setInterval(() => {
       const randomColor = DUMMY_COLORS[Math.floor(Math.random() * DUMMY_COLORS.length)];
       
       const newDummy = {
         id: `dummy-${Date.now()}`,
         colorHex: randomColor,
-        tags: [], // タグは「なし」の状態でスマートに流します
+        tags: [], // タグなし
         createdAt: new Date().toISOString(),
-        author: 'someone' // 自分以外の大切な目印
+        author: 'someone' // みんなの記録用
       };
 
-      setDummyPosts(prev => [newDummy, ...prev]);
-    };
+      // 🌟 新しい配列を完全に作り直してセットすることで、Reactに画面の更新を強制します！
+      setAllPosts(prev => {
+        const next = [newDummy, ...prev];
+        // 時間順に綺麗に並び替える
+        return next.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      });
+    }, 15000); // 15秒ごと
 
-    // 15秒（15000ミリ秒）ごとに裏側で自動実行
-    const timer = setInterval(createDummyPost, 15000);
     return () => clearInterval(timer);
   }, []);
 
-  // 合流処理（自分のきろく ＋ 自動で増えるみんなのきろく ＋ 初期データ）
-  const merged = [...myPosts, ...dummyPosts, ...SEED_POSTS];
-  const uniquePosts = Array.from(new Map(merged.map(p => [p.id, p])).values()).sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  );
-
-  // 2. 自分が投稿したときの処理
+  // 自分で投稿したときの処理
   const addPost = useCallback(async ({ colorHex, tags }) => {
     const safeTags = Array.isArray(tags) ? tags : [];
 
@@ -57,15 +57,21 @@ export function usePosts() {
       author: 'me'
     };
 
-    // 自分の端末に即座に保存（リロードしても消えません）
+    // 自分の端末に即座に保存
     setMyPosts(prev => {
       const next = [newPost, ...prev];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
 
+    // 🌟 自分の投稿も即座に画面全体のリストにガチッと割り込ませます
+    setAllPosts(prev => [newPost, ...prev]);
+
     return newPost;
   }, []);
+
+  // 重複を綺麗に削ぎ落として最終出力
+  const uniquePosts = Array.from(new Map(allPosts.map(p => [p.id, p])).values());
 
   return { posts: uniquePosts, addPost };
 }
