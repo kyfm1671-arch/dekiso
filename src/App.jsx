@@ -9,14 +9,13 @@ export default function App() {
   const [palette] = useState(() => generatePalette());
   const [screen, setScreen] = useState('record');
 
-  // 1. データを「自分の記録」と「みんなの記録」に綺麗に分ける（ここを活かします！）
+  // 1. データを「自分の記録」と「みんなの記録」に分ける
   const myPosts = posts.filter((p) => p.author === 'me');
   const everyoneElsePosts = posts.filter((p) => p.author !== 'me');
 
   const handlePost = useCallback(
     (data) => {
       addPost(data);
-      // 投稿したら、今まで通り0.8秒後に一覧画面（feed）に切り替える
       setTimeout(() => setScreen('feed'), 800);
     },
     [addPost]
@@ -29,30 +28,33 @@ export default function App() {
       </header>
       <main className="main">
         <div key={screen} className="screen">
-          {/* 【記録画面】の時は、いままで通りのシンプルな色選び画面 */}
+          {/* 【記録画面】 */}
           {screen === 'record' ? (
             <PostComposer colors={palette} onPost={handlePost} />
           ) : (
             
-            /* 【参照画面（feed）】になった時に、左右に綺麗に分かれるレイアウト */
+            /* 【参照画面（feed）】スマホの画面に100%収まるレスポンシブレイアウト */
             <div style={{
               display: 'flex',
+              flexWrap: 'wrap', // 🌟スマホの時は自動で縦並びに切り替える魔法
               maxWidth: '1200px',
               margin: '0 auto',
-              gap: '60px',
-              alignItems: 'flex-start',
-              padding: '0 20px'
+              gap: '20px',      // 🌟距離を 60px から「20px」へ大幅に小さくして左に寄せました
+              padding: '0 15px'
             }}>
               
               {/* 左側：あなたのきろく */}
-              <section style={{ flex: '1', minWidth: '300px' }}>
-                <h2 style={{ fontSize: '13px', fontWeight: '400', letterSpacing: '2px', color: '#888', marginBottom: '20px', borderBottom: '1px solid #eaeaea', paddingBottom: '8px', textAlign: 'left' }}>
+              <section style={{ 
+                flex: '1 1 280px', // 🌟最小幅を縮めてスマホの画面内に収めます
+                textAlign: 'left'
+              }}>
+                <h2 style={{ fontSize: '13px', fontWeight: '400', letterSpacing: '2px', color: '#888', marginBottom: '16px', borderBottom: '1px solid #eaeaea', paddingBottom: '8px' }}>
                   あなたのきろく
                 </h2>
                 <PostFeed posts={myPosts} />
                 
-                {/* 記録画面に戻るボタン */}
-                <div style={{ marginTop: '30px', textAlign: 'left' }}>
+                {/* 戻るボタン */}
+                <div style={{ marginTop: '24px' }}>
                   <button 
                     onClick={() => setScreen('record')}
                     style={{
@@ -61,7 +63,8 @@ export default function App() {
                       color: '#888',
                       cursor: 'pointer',
                       fontSize: '13px',
-                      textDecoration: 'underline'
+                      textDecoration: 'underline',
+                      padding: '0'
                     }}
                   >
                     もどる
@@ -69,12 +72,12 @@ export default function App() {
                 </div>
               </section>
 
-              {/* 中央の仕切り線 */}
-              <div style={{ width: '1px', backgroundColor: '#eee', alignSelf: 'stretch', minHeight: '50vh' }} />
-
               {/* 右側：みんなのきろく */}
-              <section style={{ flex: '1', minWidth: '300px' }}>
-                <h2 style={{ fontSize: '13px', fontWeight: '400', letterSpacing: '2px', color: '#888', marginBottom: '20px', borderBottom: '1px solid #eaeaea', paddingBottom: '8px', textAlign: 'left' }}>
+              <section style={{ 
+                flex: '1 1 280px', // 🌟こちらもスマホ幅にフィットさせます
+                textAlign: 'left'
+              }}>
+                <h2 style={{ fontSize: '13px', fontWeight: '400', letterSpacing: '2px', color: '#888', marginBottom: '16px', borderBottom: '1px solid #eaeaea', paddingBottom: '8px' }}>
                   みんなのきろく（リアルタイム）
                 </h2>
                 <PostFeed posts={everyoneElsePosts} />
