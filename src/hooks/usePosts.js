@@ -1,19 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SEED_POSTS } from '../data/seedPosts.js';
+// 🌟全40色をランダムに生み出すために、HSLからHexへの変換とパレットの仕組みをインポートします
+import { hslToHex, generatePalette } from '../utils/generateColors.js';
 
 const STORAGE_KEY = 'mood-log-posts-local-solid';
 
-// 🌟 ダミー投稿用の「色」と、それにぴったり合う「言葉（タグ）」の組み合わせリスト
-const DUMMY_POOL = [
-  { color: '#FF8B8B', tags: ['わくわく', 'たのしい'] },
-  { color: '#FFD166', tags: ['おなかへった', '天気'] },
-  { color: '#06D6A0', tags: ['おちつく', 'のんびり'] },
-  { color: '#118AB2', tags: ['冷静', '集中'] },
-  { color: '#073B4C', tags: ['ねむい', 'つかれた'] },
-  { color: '#E63946', tags: ['きんちょう', 'どきどき'] },
-  { color: '#9B5DE5', tags: ['おもしろい', 'ひらめき'] },
-  { color: '#A8DADC', tags: ['やすみ', '移動'] }
-];
+// タグ付き投稿の時のための、それっぽい言葉のプール
+const TAGS_POOL = ['わくわく', 'たのしい', 'おなかへった', '天気', 'おちつく', 'のんびり', 'きんちょう', 'ねむい', 'つかれた'];
 
 function loadLocal() {
   try {
@@ -29,23 +22,32 @@ export function usePosts() {
     return [...local, ...SEED_POSTS];
   });
 
-  // 🌟 15秒ごとに、色とタグをセットでランダムに降らせる魔法
+  // 🌟 15秒ごとに、全40色から完全ランダム ＆ タグあり・なしもランダムに降らせる魔法
   useEffect(() => {
     const timer = setInterval(() => {
-      // プールの中からランダムに1つのセット（色とタグの候補）を選びます
-      const randomSet = DUMMY_POOL[Math.floor(Math.random() * DUMMY_POOL.length)];
-      // そのセットが持っているタグの中から、さらにランダムで1つをピックアップします
-      const randomTag = randomSet.tags[Math.floor(Math.random() * randomSet.tags.length)];
+      // 1. あなたのアプリが持つ「全40通りのパレット」をその場で1セット生成します
+      const currentPalette = generatePalette(); 
+      // 2. その40個の中から、完全にランダムに1つの色を選び出します
+      const randomColorObj = currentPalette[Math.floor(Math.random() * currentPalette.length)];
       
+      // 3. ランダムに選んだ色の「色相(h)」「彩度(s)」「明度(l)」を、Hex形式（#ffffffなど）に100%正しく変換します
+      const finalColorHex = hslToHex(randomColorObj.h, randomColorObj.s, randomColorObj.l);
+
+      // 4. 2分の1の確率（50%）で「タグなし」にするか「タグあり」にするかを決めます
+      const isTagless = Math.random() < 0.5;
+      const assignedTags = isTagless 
+        ? [] // タグなしの場合（空の配列）
+        : [TAGS_POOL[Math.floor(Math.random() * TAGS_POOL.length)]]; // タグありの場合
+
       const newDummy = {
         id: `dummy-${Date.now()}`,
-        colorHex: randomSet.color,
-        tags: [randomTag], // 🌟 選ばれたタグをしっかり配列に入れてくっつけます
+        colorHex: finalColorHex, // 🌟全40色から選ばれた正確な色
+        tags: assignedTags,      // 🌟ランダムで「あり」か「なし」になったタグ
         createdAt: new Date().toISOString(),
         author: 'someone'
       };
 
-      // 画面の書き換えをReactに強制させて、自動で降らせます
+      // 画面の書き換えをReactに強制させます
       setAllPosts(prev => {
         const next = [newDummy, ...prev];
         return next.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -55,7 +57,7 @@ export function usePosts() {
     return () => clearInterval(timer);
   }, []);
 
-  // 自分で投稿したときの処理
+  // 自分で投稿したときの処理（変更なし・安全）
   const addPost = useCallback(async ({ colorHex, tags }) => {
     const safeTags = Array.isArray(tags) ? tags : [];
 
