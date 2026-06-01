@@ -10,7 +10,8 @@ export default function PostComposer({ colors, onPost }) {
   const [posted, setPosted] = useState(false);
 
   const selected = colors.find((color) => color.id === colorId);
-  const canPost = selected && lightness != null && tags.length >= 1;
+  // 🌟【修正】タグが選ばれていなくても、色と明るささえ選ばれていればボタンを押せるようにしました！
+  const canPost = selected && lightness != null;
 
   const handleSelect = (id) => {
     const color = colors.find((item) => item.id === id);
@@ -22,7 +23,7 @@ export default function PostComposer({ colors, onPost }) {
     if (!canPost) return;
     onPost({
       colorHex: hslToHex(selected.h, selected.s, lightness),
-      tags,
+      tags, // タグは空っぽ（[]）のまま後ろへ渡されます
     });
     setColorId(null);
     setLightness(null);
