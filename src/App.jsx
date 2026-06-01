@@ -9,9 +9,11 @@ export default function App() {
   const [palette] = useState(() => generatePalette());
   const [screen, setScreen] = useState('record');
 
-  // 1. データを「自分の記録」と「みんなの記録」に分ける
+  // 1. 左側：自分の投稿だけを絞り込む
   const myPosts = posts.filter((p) => p.author === 'me');
-  const everyoneElsePosts = posts.filter((p) => p.author !== 'me');
+  
+  // 🌟【修正】右側：自分も含めた「すべての投稿（posts）」をそのまま流すように変更しました！
+  const everyoneElsePosts = posts;
 
   const handlePost = useCallback(
     (data) => {
@@ -33,23 +35,23 @@ export default function App() {
             <PostComposer colors={palette} onPost={handlePost} />
           ) : (
             
-            /* 【参照画面（feed）】スマホでも絶対に横並びをキープするレイアウト */
+            /* 【参照画面（feed）】スマホでも横並びをキープするレイアウト */
             <div style={{
               display: 'flex',
-              flexWrap: 'nowrap', // 🌟 絶対に縦に折り返さない（横並びを死守する）魔法
+              flexWrap: 'nowrap',
               maxWidth: '1200px',
               margin: '0 auto',
-              gap: '12px',        // 🌟 距離を限界まで縮めて「12px」に。みんなの記録が左に寄ります
-              padding: '0 8px',   // 左右の端の余白も少し削って画面を広く使います
+              gap: '12px',
+              padding: '0 8px',
               width: '100%',
               boxSizing: 'border-box'
             }}>
               
-              {/* 左側：あなたのきろく（画面の約半分を使う） */}
+              {/* 左側：あなたのきろく */}
               <section style={{ 
                 flex: '1', 
-                width: '50%',     // 🌟 スマホ画面のちょうど半分の幅に設定
-                minWidth: '0',     // 横へのはみ出しを強制ストップする設定
+                width: '50%',
+                minWidth: '0',
                 textAlign: 'left'
               }}>
                 <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
@@ -76,11 +78,11 @@ export default function App() {
                 </div>
               </section>
 
-              {/* 右側：みんなのきろく（残りの半分を使う） */}
+              {/* 右側：みんなのきろく（自分＋生徒全員のリアルタイム） */}
               <section style={{ 
                 flex: '1', 
-                width: '50%',     // 🌟 スマホ画面のちょうど半分の幅に設定
-                minWidth: '0',     // 横へのはみ出しを強制ストップする設定
+                width: '50%',
+                minWidth: '0',
                 textAlign: 'left'
               }}>
                 <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
