@@ -2,40 +2,43 @@ import { useEffect, useState, useRef } from 'react';
 import PostItem from './PostItem.jsx';
 
 export default function PostFeed({ posts }) {
-  // 一番新しく追加された投稿のIDを覚えておく場所
+  // 新しく追加されて光らせるべき投稿のIDを覚えておく場所
   const [latestId, setLatestId] = useState(null);
-  // 前回どんなデータだったかを記憶しておくためのメモリー（参照用）
-  const prevLengthRef = useRef(posts ? posts.length : 0);
-  const prevTopIdRef = useRef(posts && posts[0] ? posts[0].id : null);
+  
+  // 「前回の最新の投稿ID」を記憶しておくためのメモリー
+  const prevTopIdRef = useRef(null);
 
-  // 🌟データが本当に「増えた瞬間」だけを100%見抜く安全な魔法
+  // 初回読み込み時（アプリを開いた瞬間）の古いデータを光らせないためのフラグ
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
     if (!posts || posts.length === 0) return;
 
-    const currentLength = posts.length;
-    const currentTopPost = posts[0];
+    // 現在の一番上（最新）のデータのIDを取得
+    const currentTopId = posts[0].id;
 
-    // 件数が増えた、または一番上のデータのIDが変わった（＝新しいデータが降ってきた）時だけ発動
-    if (currentLength > prevLengthRef.current || currentTopPost.id !== prevTopIdRef.current) {
-      
-      // 本当に新しく降ってきたその1件だけをターゲットにして光らせる！
-      setLatestId(currentTopPost.id);
+    // アプリを開いた最初の1回目は、過去のデータを光らせないためにスキップする
+    if (isFirstRender.current) {
+      prevTopIdRef.current = currentTopId;
+      isFirstRender.current = false;
+      return;
+    }
+
+    // 「前回の最新ID」と「今回の最新ID」が変わった＝【本当に新しいデータが1件追加された】とき
+    if (currentTopId !== prevTopIdRef.current) {
+      // 新しく降ってきたその1件だけをターゲットにして光らせる！
+      setLatestId(currentTopId);
       
       // 3秒経ったら、静かに光の余韻を消す
       const timer = setTimeout(() => {
         setLatestId(null);
       }, 3000);
 
-      // 次回の比較のために、現在の状態をメモリーに保存
-      prevLengthRef.current = currentLength;
-      prevTopIdRef.current = currentTopPost.id;
+      // 次回比較するためにメモリーを更新
+      prevTopIdRef.current = currentTopId;
 
       return () => clearTimeout(timer);
     }
-
-    // データ件数が変わっていない（ただ画面を維持しているだけ）ならメモリーだけ更新
-    prevLengthRef.current = currentLength;
-    prevTopIdRef.current = currentTopPost.id;
   }, [posts]);
 
   return (
