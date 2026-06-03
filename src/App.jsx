@@ -12,7 +12,7 @@ export default function App() {
   // 1. 左側：自分の投稿だけを絞り込む
   const myPosts = posts.filter((p) => p.author === 'me');
   
-  // 🌟【修正】右側：自分も含めた「すべての投稿（posts）」をそのまま流すように変更しました！
+  // 右側：自分も含めたすべての投稿をそのまま流す
   const everyoneElsePosts = posts;
 
   const handlePost = useCallback(
@@ -35,62 +35,76 @@ export default function App() {
             <PostComposer colors={palette} onPost={handlePost} />
           ) : (
             
-            /* 【参照画面（feed）】スマホでも横並びをキープするレイアウト */
+            /* 【参照画面（feed）】 */
             <div style={{
-              display: 'flex',
-              flexWrap: 'nowrap',
               maxWidth: '1200px',
               margin: '0 auto',
-              gap: '12px',
               padding: '0 8px',
               width: '100%',
               boxSizing: 'border-box'
             }}>
               
-              {/* 左側：あなたのきろく */}
-              <section style={{ 
-                flex: '1', 
-                width: '50%',
-                minWidth: '0',
-                textAlign: 'left'
+              {/* 🌟【引っ越し】「もどる」ボタンを一番上に持ってきました！ */}
+              <div style={{ 
+                textAlign: 'left', 
+                marginBottom: '24px', 
+                paddingLeft: '4px' 
               }}>
-                <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                  あなたのきろく
-                </h2>
-                <PostFeed posts={myPosts} />
+                <button 
+                  onClick={() => setScreen('record')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#888',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    letterSpacing: '0.5px',
+                    padding: '8px 0',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {/* シンプルな矢印をつけて押しやすくしています */}
+                  ← 記録画面にもどる
+                </button>
+              </div>
+
+              {/* スマホでも横並びをキープする左右の記録エリア */}
+              <div style={{
+                display: 'flex',
+                flexWrap: 'nowrap',
+                gap: '12px',
+                width: '100%'
+              }}>
                 
-                {/* 戻るボタン */}
-                <div style={{ marginTop: '20px' }}>
-                  <button 
-                    onClick={() => setScreen('record')}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#888',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      textDecoration: 'underline',
-                      padding: '0'
-                    }}
-                  >
-                    もどる
-                  </button>
-                </div>
-              </section>
+                {/* 左側：あなたのきろく */}
+                <section style={{ 
+                  flex: '1', 
+                  width: '50%',
+                  minWidth: '0',
+                  textAlign: 'left'
+                }}>
+                  <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
+                    あなたのきろく
+                  </h2>
+                  <PostFeed posts={myPosts} />
+                </section>
 
-              {/* 右側：みんなのきろく（自分＋生徒全員のリアルタイム） */}
-              <section style={{ 
-                flex: '1', 
-                width: '50%',
-                minWidth: '0',
-                textAlign: 'left'
-              }}>
-                <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                  みんなのきろく（リアルタイム）
-                </h2>
-                <PostFeed posts={everyoneElsePosts} />
-              </section>
+                {/* 右側：みんなのきろく */}
+                <section style={{ 
+                  flex: '1', 
+                  width: '50%',
+                  minWidth: '0',
+                  textAlign: 'left'
+                }}>
+                  <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
+                    みんなのきろく（リアルタイム）
+                  </h2>
+                  <PostFeed posts={everyoneElsePosts} />
+                </section>
 
+              </div>
             </div>
           )}
         </div>
