@@ -6,37 +6,33 @@ export default function PostFeed({ posts }) {
   const [latestId, setLatestId] = useState(null);
   
   // 「前回の最新の投稿ID」を記憶しておくためのメモリー
-  const prevTopIdRef = useRef(null);
-
-  // 初回読み込み時（アプリを開いた瞬間）の古いデータを光らせないためのフラグ
-  const isFirstRender = useRef(true);
+  const prevTopIdRef = useRef(posts && posts[0] ? posts[0].id : null);
 
   useEffect(() => {
     if (!posts || posts.length === 0) return;
 
-    // 現在の一番上（最新）のデータのIDを取得
-    const currentTopId = posts[0].id;
+    // 現在の一番上（最新）のデータ
+    const currentTopPost = posts[0];
+    const currentTopId = currentTopPost.id;
 
-    // アプリを開いた最初の1回目は、過去のデータを光らせないためにスキップする
-    if (isFirstRender.current) {
+    // 🌟【ここが超重要】
+    // 画面が切り替わった（表示された）瞬間に、一番上のデータが「作られてから1.5秒以内」の生まれたてデータだったら、
+    // 画面切り替えのタイムラグに関係なく、強制的にいま投稿されたものとして光らせる！
+    const postAgeMs = Date.now() - new Date(currentTopPost.createdAt).getTime();
+    
+    if (postAgeMs < 1500) {
+      setLatestId(currentTopId);
+      const timer = setTimeout(() => setLatestId(null), 3000);
       prevTopIdRef.current = currentTopId;
-      isFirstRender.current = false;
-      return;
+      return () => clearTimeout(timer);
     }
 
-    // 「前回の最新ID」と「今回の最新ID」が変わった＝【本当に新しいデータが1件追加された】とき
+    // 🌟【みんなの自動追加用】
+    // すでに画面が開いている状態で、新しく他人のデータが降ってきた場合
     if (currentTopId !== prevTopIdRef.current) {
-      // 新しく降ってきたその1件だけをターゲットにして光らせる！
       setLatestId(currentTopId);
-      
-      // 3秒経ったら、静かに光の余韻を消す
-      const timer = setTimeout(() => {
-        setLatestId(null);
-      }, 3000);
-
-      // 次回比較するためにメモリーを更新
+      const timer = setTimeout(() => setLatestId(null), 3000);
       prevTopIdRef.current = currentTopId;
-
       return () => clearTimeout(timer);
     }
   }, [posts]);
