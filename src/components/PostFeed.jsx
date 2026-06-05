@@ -2,18 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import PostItem from './PostItem.jsx';
 
 export default function PostFeed({ posts }) {
-  // カレンダーを表示するかどうかのフラグ（最初は閉じておく）
-  const [showCalendar, setShowCalendar] = useState(false);
-
-  // 初期値として「今日」の日付を自動セット（日本時間ズレ防止）
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    const offset = today.getTimezoneOffset() * 60000;
-    const localISOTime = (new Date(today - offset)).toISOString();
-    return localISOTime.split('T')[0];
-  });
-
-  // 新着投稿のアニメーション管理用
   const [latestId, setLatestId] = useState(null);
   const prevTopIdRef = useRef(posts && posts[0] ? posts[0].id : null);
 
@@ -39,17 +27,12 @@ export default function PostFeed({ posts }) {
     }
   }, [posts]);
 
-  // 🌟【超重要】親から渡されたpostsに「みんなの記録」が混ざっているか判定します
-  const isEveryoneColumn = posts.some(post => post.author === 'everyone');
-
-  // 🌟【リクエスト反映】まだ記録とは連携させないので、カレンダーの日付に関わらず
-  // 「あなたの記録」も「みんなの記録」も、届いたデータをそのまま100%全件表示します。
-  const displayPosts = posts;
+  if (!posts || posts.length === 0) {
+    return <p style={{ textAlign: 'left', fontSize: '12px', color: '#9ca3af', padding: '1rem 0' }}>記録はありません</p>;
+  }
 
   return (
-    <section className="feed" aria-label="投稿リスト" style={{ width: '100%' }}>
-      
-      {/* 綺麗な滑り込み＆発光アニメーションCSS */}
+    <section className="feed" style={{ width: '100%' }}>
       <style>{`
         @keyframes slideInAndDown {
           0% { opacity: 0; transform: translateY(-20px); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
@@ -68,90 +51,27 @@ export default function PostFeed({ posts }) {
         .old-post-item { margin-bottom: 16px; }
       `}</style>
 
-      {/* 📅 【ご希望の配置】「みんなのきろく（リアルタイム）」の列の上にだけ、
-          カレンダーボタンを1つ出現させます（左側のあなたのきろく側には何も出さなくなります） */}
-      {isEveryoneColumn && (
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          gap: '0.5rem', 
-          marginBottom: '2rem',
-          marginTop: '0.5rem'
-        }}>
-          <button 
-            onClick={() => setShowCalendar(!showCalendar)}
-            style={{
-              background: 'none',
-              border: '1px solid #e5e7eb',
-              borderRadius: '20px',
-              padding: '0.4rem 1.2rem',
-              fontSize: '0.85rem',
-              color: '#6b7280',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              backgroundColor: showCalendar ? '#f3f4f6' : '#ffffff',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              transition: 'all 0.2s ease',
-              outline: 'none'
-            }}
-          >
-            <span>📅</span> {showCalendar ? 'カレンダーを閉じる' : '過去のきろくを振り返る'}
-          </button>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {posts.map((post) => {
+          const isLatest = post.id === latestId;
+          const glowColor = post.colorHex;
+          const glowColorLight = post.colorHex + '25';
 
-          {/* ボタンを押して開いたときだけ下にフワッと現れる日付選択 */}
-          {showCalendar && (
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+          return (
+            <li 
+              key={post.id} 
+              className={isLatest ? 'new-post-animation' : 'old-post-item'}
               style={{
-                padding: '0.3rem 0.7rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '0.9rem',
-                color: '#374151',
-                backgroundColor: '#ffffff',
-                cursor: 'pointer',
-                outline: 'none',
-                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+                '--glow-color': glowColor,
+                '--glow-color-light': glowColorLight,
+                transition: 'all 0.3s ease'
               }}
-            />
-          )}
-        </div>
-      )}
-
-      {/* 実際の投稿リストを表示 */}
-      {displayPosts.length === 0 ? (
-        <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#9ca3af', padding: '2rem 0' }}>
-          {isEveryoneColumn ? 'まだ誰も投稿していません' : 'この日のあなたの記録はありません'}
-        </p>
-      ) : (
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {displayPosts.map((post) => {
-            const isLatest = post.id === latestId;
-            const glowColor = post.colorHex;
-            const glowColorLight = post.colorHex + '25';
-
-            return (
-              <li 
-                key={post.id} 
-                className={isLatest ? 'new-post-animation' : 'old-post-item'}
-                style={{
-                  '--glow-color': glowColor,
-                  '--glow-color-light': glowColorLight,
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <PostItem post={post} />
-              </li>
-            );
-          })}
-        </ul>
-      )}
+            >
+              <PostItem post={post} />
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
