@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // 🌟【重要】あなたのSupabaseの情報に書き換えてください
-const SUPABASE_URL = 'https://hmabpmrcfghpuhpakkrw.supabase.co/rest/v1/'; // 
+const SUPABASE_URL = 'https://hmabpmrcfghpuhpakkrw.supabase.co'; // 
 const SUPABASE_KEY = 'sb_publishable_NkVNXqW5t450DtRG7bAkkw_EGOLmjzz'; // 
 
 export function usePosts() {
