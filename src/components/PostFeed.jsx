@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import PostItem from './PostItem.jsx';
 
 export default function PostFeed({ posts }) {
-  // カレンダーを表示するかどうかのフラグ
+  // カレンダーを表示するかどうかのフラグ（最初は閉じる）
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // 初期値として「今日」の日付を自動セット（日本時間ズレ防止）
+  // 初期値として「今日」の日付を自動セット（日本時間のズレ防止）
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     const offset = today.getTimezoneOffset() * 60000;
@@ -47,10 +47,10 @@ export default function PostFeed({ posts }) {
     return postDate === selectedDate;
   });
 
-  // 2. みんなの記録（everyone）：カレンダーは完全に無視して、最新30件をそのまま通す
+  // 2. みんなの記録（everyone）：カレンダーは完全に無視して、すべての最新30件を通す
   const everyonePosts = posts.filter(post => post.author === 'everyone');
 
-  // リストを生成する共通処理
+  // 投稿リストを出力する共通関数
   const renderList = (targetList, emptyMessage) => {
     if (targetList.length === 0) {
       return <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#9ca3af', padding: '2rem 0' }}>{emptyMessage}</p>;
@@ -84,7 +84,7 @@ export default function PostFeed({ posts }) {
   return (
     <section className="feed" aria-label="みんなの記録" style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1rem' }}>
       
-      {/* 綺麗な滑り込み＆発光アニメーションCSS */}
+      {/* 滑り込み＆発光アニメーションCSS */}
       <style>{`
         @keyframes slideInAndDown {
           0% { opacity: 0; transform: translateY(-20px); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
@@ -103,14 +103,14 @@ export default function PostFeed({ posts }) {
         .old-post-item { margin-bottom: 16px; }
       `}</style>
 
-      {/* 🧭 「記録画面にもどる」ボタンの並びに優しく寄り添うメニューバー */}
+      {/* 📅 カレンダーを開くための優しいボタン（「もどる」ボタンの並び用・画面上部に1つだけ設置） */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
         gap: '1rem', 
         marginBottom: '2.5rem',
-        marginTop: '-1rem' // もどるボタンとの距離を程よく詰める
+        marginTop: '-1rem'
       }}>
         <button 
           onClick={() => setShowCalendar(!showCalendar)}
@@ -134,7 +134,7 @@ export default function PostFeed({ posts }) {
           <span>📅</span> {showCalendar ? 'カレンダーを閉じる' : '過去のきろくを振り返る'}
         </button>
 
-        {/* ボタンを押して開いたときだけ横にフワッと現れる日付選択 */}
+        {/* ボタンを押して開いたときだけ横に現れる日付選択 */}
         {showCalendar && (
           <input
             type="date"
@@ -155,7 +155,7 @@ export default function PostFeed({ posts }) {
         )}
       </div>
 
-      {/* 📊 二段組（左右分割）の美しい本番レイアウト */}
+      {/* 📊 左右二段組（左右分割）の美しい本番レイアウト */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2.5rem' }}>
         
         {/* 左側：あなたのきろく（カレンダーの日付と連動） */}
