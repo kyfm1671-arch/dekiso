@@ -3,14 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 const SUPABASE_URL = 'https://hmabpmrcfghpuhpakkrw.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_NkVNXqW5t450DtRG7bAkkw_EGOLmjzz';
 
-// スマホ・PCごとに、名前は使わず「匿名ID」を割り振って左右を仕分けるキー
 const SENDER_ID_KEY = 'mood-log-sender-uuid';
 
 function getOrCreateSenderId() {
   try {
     let id = localStorage.getItem(SENDER_ID_KEY);
     if (!id) {
-      // ランダムな英数字の組み合わせで、世界に1つだけの匿名IDを作ります
       id = 'user-' + Math.random().toString(36).substring(2, 15);
       localStorage.setItem(SENDER_ID_KEY, id);
     }
@@ -22,7 +20,6 @@ function getOrCreateSenderId() {
 
 export function usePosts() {
   const [posts, setPosts] = useState([]);
-  // 自分専用のIDを取得して保持
   const [myId] = useState(getOrCreateSenderId);
 
   // 1. データベースから最新の投稿を読み込む機能
@@ -41,18 +38,20 @@ export function usePosts() {
       const data = await res.json();
       
       const formattedPosts = data.map(post => {
-        // 🌟Supabaseの `colorHex` の中に「色コード,端末ID,タグ」を合体させて保存しているため、ここで分解します
         const parts = (post.colorHex || '').split('|');
         const hex = parts[0] || '#ffffff';
         const senderId = parts[1] || 'unknown';
-        const tagText = parts[2] || '';
+        const tagsJoinedText = parts[2] || ''; // カンマ区切りのタグ文字列
+
+        // 🌟【修正】カンマで繋がったテキストを、元のバラバラの配列に戻します
+        // 文字列が空っぽの場合は、空の配列（[]）にします
+        const restoredTags = tagsJoinedText ? tagsJoinedText.split(',') : [];
 
         return {
           id: post.id,
           colorHex: hex,
-          tags: tagText ? [tagText] : [], 
+          tags: restoredTags, // 🌟これで複数タグが完全復活！
           createdAt: post.created_at,
-          // 🌟この投稿の端末IDが、自分の端末ID（myId）と一致すれば左側（'me'）へ、違えば右側（'everyone'）へ自動仕分け！
           author: senderId === myId ? 'me' : 'everyone'
         };
       });
@@ -63,27 +62,23 @@ export function usePosts() {
     }
   }, [myId]);
 
-  // 2. 画面が開いたときにデータを読み込み、定期リフレッシュ
+  // 2. 定期リフレッシュの監視
   useEffect(() => {
     fetchPosts();
-
-    // 確実に同期させるため、3目おきに超高速自動更新を回します
     const backupTimer = setInterval(fetchPosts, 3000);
-
-    return () => {
-      clearInterval(backupTimer);
-    };
+    return () => clearInterval(backupTimer);
   }, [fetchPosts]);
 
   // 3. 新しい色をSupabaseに保存（投稿）する機能
   const addPost = useCallback(async ({ colorHex, tags }) => {
     try {
       const safeTags = Array.isArray(tags) ? tags : [];
-      const tagText = safeTags.length > 0 ? safeTags[0] : '';
+      
+      // 🌟【修正】選ばれた複数のタグをカンマ「,」で1本に合体させます（例: "わくわく,たのしい"）
+      const tagsJoinedText = safeTags.join(',');
 
-      // 🌟【超裏ワザ】既存の「colorHex」の列に、縦棒（|）で区切って「色コード | 端末ID | タグ」を1本にまとめて送信します！
-      // これにより、Supabase側のテーブル設定を一切変更することなく、全てのデータを100%安全に保存できます。
-      const packedData = `${colorHex}|${myId}|${tagText}`;
+      // 「色コード | 端末ID | 複数合体タグ」の形にして送信します
+      const packedData = `${colorHex}|${myId}|${tagsJoinedText}`;
 
       const bodyData = {
         colorHex: packedData
