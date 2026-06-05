@@ -1,16 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// 🌟【重要】あなたのSupabaseの情報に書き換えてください
-const SUPABASE_URL = 'https://hmabpmrcfghpuhpakkrw.supabase.co'; // 
-const SUPABASE_KEY = 'sb_publishable_NkVNXqW5t450DtRG7bAkkw_EGOLmjzz'; // 
+// 🌟あなたのSupabase情報
+const SUPABASE_URL = 'https://hmabpmrcfghpuhpakkrw.supabase.co'; 
+const SUPABASE_KEY = 'sb_publishable_NkVNXqW5t450DtRG7bAkkw_EGOLmjzz'; 
+
+// 🌟【新機能】スマホ・PCごとに、名前は使わず「匿名の背番号（ユーザーID）」を自動生成して固定する仕組み
+const SENDER_ID_KEY = 'mood-log-sender-id-unique';
+const getOrCreateSenderId = () => {
+  let id = localStorage.getItem(SENDER_ID_KEY);
+  if (!id) {
+    // ランダムな英数字の組み合わせで、世界に1つだけの端末IDを作ります
+    id = `user-${Math.random().toString(36).substring(2, 11)}-${Date.now().toString(36)}`;
+    localStorage.setItem(SENDER_ID_KEY, id);
+  }
+  return id;
+};
 
 export function usePosts() {
   const [posts, setPosts] = useState([]);
+  // この端末専用のIDを取得して保持
+  const [myId] = useState(getOrCreateSenderId);
 
   // 1. データベースから最新の投稿を読み込む機能
   const fetchPosts = useCallback(async () => {
     try {
-      // 最新の投稿から順に30件取得する命令
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc&limit=30`,
         {
@@ -27,24 +40,22 @@ export function usePosts() {
       const formattedPosts = data.map(post => ({
         id: post.id,
         colorHex: post.colorHex,
-        // 🌟Supabaseから届いたタグ（文字列）を、元のコードと同じ配列形式に戻します
         tags: post.colorName ? [post.colorName] : [], 
         createdAt: post.created_at,
-        // テーブルに保存された「isMe」がtrueなら 'me'、falseなら 'everyone' に割り振る
-        author: post.isMe ? 'me' : 'everyone'
+        // 🌟【仕分けのコア】データのauthor列に入っているIDが、このスマホのIDと「一致するかどうか」で自分のものか判別します！
+        author: post.author === myId ? 'me' : 'everyone'
       }));
 
       setPosts(formattedPosts);
     } catch (err) {
       console.error('データ読み込みエラー:', err);
     }
-  }, []);
+  }, [myId]);
 
   // 2. 画面が開いたときにデータを読み込み、さらに「リアルタイム監視」を開始する
   useEffect(() => {
     fetchPosts();
 
-    // Supabaseのリアルタイム通信用のエンドポイントを監視
     const eventSource = new EventSource(
       `${SUPABASE_URL}/rest/v1/posts?select=*`,
       {
@@ -55,13 +66,6 @@ export function usePosts() {
       }
     );
 
-    // データベースに変化（新しい行が追加など）があったら自動で再読み込み
-    const handleRealtimeUpdate = () => {
-      fetchPosts();
-    };
-
-    // 本来は詳細なイベント購読が必要ですが、一番確実に動かすために
-    // 定期的な自動リフレッシュ（3秒おき）も安全装置として裏で同時に回します
     const backupTimer = setInterval(fetchPosts, 3000);
 
     return () => {
@@ -74,13 +78,13 @@ export function usePosts() {
   const addPost = useCallback(async ({ colorHex, tags }) => {
     try {
       const safeTags = Array.isArray(tags) ? tags : [];
-      // 🌟元のアプリの仕様に合わせ、配列の最初の1つを「colorName」の列に保存します
       const tagText = safeTags.length > 0 ? safeTags[0] : '';
 
       const bodyData = {
         colorHex: colorHex,
-        colorName: tagText, // 🌟ここにタグのテキストが入ります
-        isMe: true // 自分がこの画面から投稿したものは「true」として保存
+        colorName: tagText, 
+        // 🌟【ここを変更】isMe: true の代わりに、この端末の匿名IDをサーバーへ送信して記録します
+        author: myId 
       };
 
       await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
@@ -94,12 +98,11 @@ export function usePosts() {
         body: JSON.stringify(bodyData)
       });
 
-      // 投稿したらすぐに自分の画面にも反映させる
       fetchPosts();
     } catch (err) {
       console.error('投稿エラー:', err);
     }
-  }, [fetchPosts]);
+  }, [fetchPosts, myId]);
 
   return { posts, addPost };
 }
