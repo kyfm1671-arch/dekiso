@@ -8,7 +8,7 @@ export default function App() {
   const { posts, addPost } = usePosts();
   const [palette] = useState(() => generatePalette());
   
-  // 🌟 画面の状態管理に、新しく 'history' (過去のきろく画面) を追加します
+  // 画面の状態管理
   // 'record' (記録) | 'feed' (現在のタイムライン) | 'history' (過去の自分の記録)
   const [screen, setScreen] = useState('record');
 
@@ -25,14 +25,18 @@ export default function App() {
   const myPosts = posts.filter((p) => p.author === 'me');
   const everyoneElsePosts = posts;
 
-  // 🌟【新機能】カレンダーで選んだ日付の「自分の記録だけ」を抽出する
+  // 🌟【時差バグ修正版】カレンダーで選んだ日付の「自分の記録だけ」を抽出する
   const historyPosts = posts.filter((p) => {
     // 自分の投稿であること
     if (p.author !== 'me') return false;
+    if (!p.createdAt) return false;
     
-    // 投稿の作成日（YYYY-MM-DD部分）と選択された日付が一致するか比較
-    const postDate = new Date(p.createdAt).toISOString().split('T')[0];
-    return postDate === selectedDate;
+    // 💡【ここを修正】世界標準時への自動変換を防ぎ、日本時間のまま「YYYY-MM-DD」を取り出します
+    const localDate = new Date(p.createdAt);
+    const offset = localDate.getTimezoneOffset() * 60000;
+    const postDateStr = (new Date(localDate - offset)).toISOString().split('T')[0];
+
+    return postDateStr === selectedDate;
   });
 
   const handlePost = useCallback(
@@ -43,11 +47,11 @@ export default function App() {
     [addPost]
   );
 
-  // 🌟【新機能】カレンダーの日付がタップ（変更）されたときの処理
+  // カレンダーの日付がタップ（変更）されたときの処理
   const handleDateChange = (e) => {
     const newDate = e.target.value;
-    setSelectedDate(newDate);   // 日付を更新して
-    setScreen('history');       // 🌟「別の画面（過去の自分の記録画面）」にジャンプ！
+    setSelectedDate(newDate);   // 日付を更新
+    setScreen('history');       // 過去の自分の記録画面にジャンプ
   };
 
   return (
@@ -72,7 +76,7 @@ export default function App() {
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 8px', width: '100%', boxSizing: 'border-box' }}>
               
               {/* もどるボタン と カレンダーボタン */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '0 4px' }}>
+              <div style={{ display: 'flex', justifycontent: 'space-between', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '0 4px' }}>
                 <button 
                   onClick={() => setScreen('record')}
                   style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -92,7 +96,7 @@ export default function App() {
                     <input
                       type="date"
                       value={selectedDate}
-                      onChange={handleDateChange} /* 🌟タップしたら画面を切り替える関数を呼び出す */
+                      onChange={handleDateChange}
                       style={{ padding: '2px 6px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '11px', color: '#374151', backgroundColor: '#ffffff', cursor: 'pointer' }}
                     />
                   )}
@@ -119,15 +123,18 @@ export default function App() {
           )}
 
           {/* =========================================================
-              3. 🌟【新設：別の画面】カレンダーで選んだ「指定日の自分のきろく」画面
+              3. 【別画面：指定日の自分のきろく】
              ========================================================= */}
           {screen === 'history' && (
             <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
               
-              {/* いつでも通常のリアルタイム画面に戻れるボタン */}
+              {/* リアルタイム画面に戻るボタン */}
               <div style={{ textAlign: 'left', marginBottom: '24px' }}>
                 <button 
-                  onClick={() => setScreen('feed')} /* 🌟タイムライン画面に戻る */
+                  onClick={() => {
+                    setShowCalendar(false); // カレンダーを閉じる
+                    setScreen('feed');      // タイムライン画面に戻る
+                  }}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -154,7 +161,7 @@ export default function App() {
                 </p>
               </div>
 
-              {/* 🌟 抽出した「その日の自分の記録（historyPosts）」だけを1列で美しく流す */}
+              {/* 抽出した指定日の自分の記録だけを表示 */}
               <div style={{ marginTop: '16px' }}>
                 <PostFeed posts={historyPosts} />
               </div>
