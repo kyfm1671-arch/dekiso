@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import PostItem from './PostItem.jsx';
 
 export default function PostFeed({ posts }) {
-  // カレンダーの開閉状態（最初は閉じておく）
+  // カレンダーを表示するかどうかのフラグ
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // 初期値として「今日」の日付を自動セット
+  // 初期値として「今日」の日付を自動セット（日本時間ズレ防止）
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     const offset = today.getTimezoneOffset() * 60000;
@@ -13,7 +13,7 @@ export default function PostFeed({ posts }) {
     return localISOTime.split('T')[0];
   });
 
-  // 新着投稿を光らせる・動かすためのアニメーション管理
+  // 新着投稿のアニメーション管理用
   const [latestId, setLatestId] = useState(null);
   const prevTopIdRef = useRef(posts && posts[0] ? posts[0].id : null);
 
@@ -39,27 +39,26 @@ export default function PostFeed({ posts }) {
     }
   }, [posts]);
 
-  // 1. 【条件分岐】自分の記録はカレンダーの日付で絞り込み、みんなの記録は最新30件をそのまま通す
-  const filteredPosts = posts.filter(post => {
-    if (post.author === 'me') {
-      if (!post.createdAt) return false;
-      const postDate = post.createdAt.split('T')[0];
-      return postDate === selectedDate;
-    }
-    return true;
+  // 1. 自分の記録（me）：カレンダーの日付と完全一致するものだけに絞り込む
+  const myFilteredPosts = posts.filter(post => {
+    if (post.author !== 'me') return false;
+    if (!post.createdAt) return false;
+    const postDate = post.createdAt.split('T')[0];
+    return postDate === selectedDate;
   });
 
-  // 投稿をレンダリングする共通関数（アニメーション付き）
-  const renderPostList = (targetAuthor) => {
-    const list = filteredPosts.filter(p => p.author === targetAuthor);
+  // 2. みんなの記録（everyone）：カレンダーは完全に無視して、最新30件をそのまま通す
+  const everyonePosts = posts.filter(post => post.author === 'everyone');
 
-    if (list.length === 0) {
-      return <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#9ca3af', padding: '1.5rem 0' }}>記録はありません</p>;
+  // リストを生成する共通処理
+  const renderList = (targetList, emptyMessage) => {
+    if (targetList.length === 0) {
+      return <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#9ca3af', padding: '2rem 0' }}>{emptyMessage}</p>;
     }
 
     return (
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {list.map((post) => {
+        {targetList.map((post) => {
           const isLatest = post.id === latestId;
           const glowColor = post.colorHex;
           const glowColorLight = post.colorHex + '25';
@@ -83,9 +82,9 @@ export default function PostFeed({ posts }) {
   };
 
   return (
-    <section className="feed" aria-label="みんなの記録" style={{ maxWidth: '800px', margin: '0 auto', padding: '0 1rem' }}>
+    <section className="feed" aria-label="みんなの記録" style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1rem' }}>
       
-      {/* 綺麗なCSSアニメーションを定義 */}
+      {/* 綺麗な滑り込み＆発光アニメーションCSS */}
       <style>{`
         @keyframes slideInAndDown {
           0% { opacity: 0; transform: translateY(-20px); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
@@ -104,37 +103,45 @@ export default function PostFeed({ posts }) {
         .old-post-item { margin-bottom: 16px; }
       `}</style>
 
-      {/* 📅 カレンダーを開くための「優しいボタン」配置エリア */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+      {/* 🧭 「記録画面にもどる」ボタンの並びに優しく寄り添うメニューバー */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: '1rem', 
+        marginBottom: '2.5rem',
+        marginTop: '-1rem' // もどるボタンとの距離を程よく詰める
+      }}>
         <button 
           onClick={() => setShowCalendar(!showCalendar)}
           style={{
             background: 'none',
             border: '1px solid #e5e7eb',
             borderRadius: '20px',
-            padding: '0.4rem 1rem',
-            fontSize: '0.875rem',
+            padding: '0.4rem 1.2rem',
+            fontSize: '0.85rem',
             color: '#6b7280',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.3rem',
+            gap: '0.4rem',
             backgroundColor: showCalendar ? '#f3f4f6' : '#ffffff',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
             transition: 'all 0.2s ease',
             outline: 'none'
           }}
         >
-          <span>📅</span> {showCalendar ? 'カレンダーを閉じる' : '過去の記録を振り返る'}
+          <span>📅</span> {showCalendar ? 'カレンダーを閉じる' : '過去のきろくを振り返る'}
         </button>
 
-        {/* ボタンを押して開いたときだけ優しく表示されるカレンダー */}
+        {/* ボタンを押して開いたときだけ横にフワッと現れる日付選択 */}
         {showCalendar && (
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             style={{
-              padding: '0.3rem 0.6rem',
+              padding: '0.3rem 0.7rem',
               border: '1px solid #d1d5db',
               borderRadius: '8px',
               fontSize: '0.9rem',
@@ -142,29 +149,45 @@ export default function PostFeed({ posts }) {
               backgroundColor: '#ffffff',
               cursor: 'pointer',
               outline: 'none',
-              animation: 'fadeIn 0.2s ease'
+              boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
             }}
           />
         )}
       </div>
 
-      {/* 📊 左右二段組のスッキリしたレイアウト */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1rem' }}>
+      {/* 📊 二段組（左右分割）の美しい本番レイアウト */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2.5rem' }}>
         
         {/* 左側：あなたのきろく（カレンダーの日付と連動） */}
         <div>
-          <h3 style={{ textAlign: 'center', fontSize: '1rem', fontWeight: 'bold', color: '#4b5563', marginBottom: '1.2rem', paddingBottom: '0.4rem', borderBottom: '2px solid #818cf8' }}>
+          <h3 style={{ 
+            textAlign: 'center', 
+            fontSize: '1.05rem', 
+            fontWeight: 'bold', 
+            color: '#4b5563', 
+            marginBottom: '1.5rem', 
+            paddingBottom: '0.5rem', 
+            borderBottom: '2px solid #818cf8' 
+          }}>
             あなたのきろく
           </h3>
-          {renderPostList('me')}
+          {renderList(myFilteredPosts, 'この日のあなたの記録はありません')}
         </div>
 
-        {/* 右側：みんなのきろく（常にリアルタイム最新30件） */}
+        {/* 右側：みんなのきろく（常にリアルタイム最新30件・カレンダー無視） */}
         <div>
-          <h3 style={{ textAlign: 'center', fontSize: '1rem', fontWeight: 'bold', color: '#4b5563', marginBottom: '1.2rem', paddingBottom: '0.4rem', borderBottom: '2px solid #34d399' }}>
+          <h3 style={{ 
+            textAlign: 'center', 
+            fontSize: '1.05rem', 
+            fontWeight: 'bold', 
+            color: '#4b5563', 
+            marginBottom: '1.5rem', 
+            paddingBottom: '0.5rem', 
+            borderBottom: '2px solid #34d399' 
+          }}>
             みんなのきろく（リアルタイム）
           </h3>
-          {renderPostList('everyone')}
+          {renderList(everyonePosts, 'まだ誰も投稿していません')}
         </div>
 
       </div>
