@@ -9,10 +9,10 @@ export default function App() {
   const [palette] = useState(() => generatePalette());
   const [screen, setScreen] = useState('record');
 
-  // 🌟 カレンダーを表示するかどうかのフラグ（最初は閉じておく）
+  // カレンダーを表示するかどうかのフラグ
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // 🌟 初期値として「今日」の日付を自動セット（まだ連携はしませんが、ボタン用として保持）
+  // 初期値として「今日」の日付を自動セット
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     const offset = today.getTimezoneOffset() * 60000;
@@ -51,15 +51,20 @@ export default function App() {
               margin: '0 auto',
               padding: '0 8px',
               width: '100%',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              position: 'relative' // 🌟ボタンを絶対配置するための基準
             }}>
               
-              {/* 「もどる」ボタンを一番上に配置 */}
+              {/* 「もどる」ボタンと「カレンダー」を配置する最上部コンテナ */}
               <div style={{ 
-                textAlign: 'left', 
+                display: 'flex',
+                justifyContent: 'space-between', // 🌟左に「もどる」、右に「カレンダー」を並べる
+                alignItems: 'center',
                 marginBottom: '24px', 
-                paddingLeft: '4px' 
+                padding: '0 4px',
+                position: 'relative'
               }}>
+                {/* 左側：もどるボタン */}
                 <button 
                   onClick={() => setScreen('record')}
                   style={{
@@ -77,6 +82,51 @@ export default function App() {
                 >
                   ← 記録画面にもどる
                 </button>
+
+                {/* 右側：カレンダー表示ボタン（右側の列の真上に来るように配置） */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px'
+                }}>
+                  <button 
+                    onClick={() => setShowCalendar(!showCalendar)}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '20px',
+                      padding: '4px 12px',
+                      fontSize: '11px',
+                      color: '#6b7280',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>📅</span> {showCalendar ? '閉じる' : '過去のきろくを振り返る'}
+                  </button>
+
+                  {/* 開いたときだけ横にピョコッと現れる日付選択 */}
+                  {showCalendar && (
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      style={{
+                        padding: '2px 6px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        color: '#374151',
+                        backgroundColor: '#ffffff',
+                        cursor: 'pointer'
+                      }}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* スマホでも横並びをキープする左右の記録エリア */}
@@ -94,6 +144,7 @@ export default function App() {
                   minWidth: '0',
                   textAlign: 'left'
                 }}>
+                  {/* 🌟ここが綺麗に右側と高さ一致します */}
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     あなたのきろく
                   </h2>
@@ -107,53 +158,7 @@ export default function App() {
                   minWidth: '0',
                   textAlign: 'left'
                 }}>
-                  {/* 🌟【ここがリクエストの場所！】みんなのきろくタイトルの「真上」に配置しました */}
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    marginBottom: '12px',
-                    minHeight: '32px' // カレンダーが開いたときにガタつかないためのクッション
-                  }}>
-                    <button 
-                      onClick={() => setShowCalendar(!showCalendar)}
-                      style={{
-                        background: '#ffffff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '20px',
-                        padding: '3px 10px',
-                        fontSize: '11px',
-                        color: '#6b7280',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <span>📅</span> {showCalendar ? '閉じる' : '過去のきろくを振り返る'}
-                    </button>
-
-                    {/* 開いたときだけ横にピョコッと現れる日付選択 */}
-                    {showCalendar && (
-                      <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        style={{
-                          padding: '2px 6px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          color: '#374151',
-                          backgroundColor: '#ffffff',
-                          cursor: 'pointer'
-                        }}
-                      />
-                    )}
-                  </div>
-
+                  {/* 🌟ここが綺麗に左側と高さ一致します */}
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     みんなのきろく（リアルタイム）
                   </h2>
