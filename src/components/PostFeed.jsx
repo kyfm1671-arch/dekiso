@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import PostItem from './PostItem.jsx';
 
 export default function PostFeed({ posts }) {
-  // 🌟 初期値として「今日（日本時間）」の日付を自動セット
+  // カレンダーの開閉状態（最初は閉じておく）
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  // 初期値として「今日」の日付を自動セット
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     const offset = today.getTimezoneOffset() * 60000;
@@ -10,7 +13,7 @@ export default function PostFeed({ posts }) {
     return localISOTime.split('T')[0];
   });
 
-  // 🌟 新着投稿を光らせる・動かすためのアニメーション管理
+  // 新着投稿を光らせる・動かすためのアニメーション管理
   const [latestId, setLatestId] = useState(null);
   const prevTopIdRef = useRef(posts && posts[0] ? posts[0].id : null);
 
@@ -20,7 +23,6 @@ export default function PostFeed({ posts }) {
     const currentTopPost = posts[0];
     const currentTopId = currentTopPost.id;
 
-    // 【自分用】表示された瞬間に生まれたて（1.5秒以内）なら光らせる
     const postAgeMs = Date.now() - new Date(currentTopPost.createdAt).getTime();
     if (postAgeMs < 1500) {
       setLatestId(currentTopId);
@@ -29,7 +31,6 @@ export default function PostFeed({ posts }) {
       return () => clearTimeout(timer);
     }
 
-    // 【みんな用】新しく他人のデータが降ってきたら光らせる
     if (currentTopId !== prevTopIdRef.current) {
       setLatestId(currentTopId);
       const timer = setTimeout(() => setLatestId(null), 3000);
@@ -38,15 +39,13 @@ export default function PostFeed({ posts }) {
     }
   }, [posts]);
 
-  // 1. 【新ルール】自分の記録はカレンダーの日付で絞り込み、みんなの記録は日付関係なくそのまま（最新30件）出す！
+  // 1. 【条件分岐】自分の記録はカレンダーの日付で絞り込み、みんなの記録は最新30件をそのまま通す
   const filteredPosts = posts.filter(post => {
-    // 自分の投稿（me）のときだけ、カレンダーの日付と一致するものだけに絞り込む
     if (post.author === 'me') {
       if (!post.createdAt) return false;
       const postDate = post.createdAt.split('T')[0];
       return postDate === selectedDate;
     }
-    // みんなの投稿（everyone）のときは、日付に関わらずすべて（最新30件）通過させる！
     return true;
   });
 
@@ -55,7 +54,7 @@ export default function PostFeed({ posts }) {
     const list = filteredPosts.filter(p => p.author === targetAuthor);
 
     if (list.length === 0) {
-      return <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#9ca3af', padding: '1rem 0' }}>この日の記録はありません</p>;
+      return <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#9ca3af', padding: '1.5rem 0' }}>記録はありません</p>;
     }
 
     return (
@@ -84,93 +83,77 @@ export default function PostFeed({ posts }) {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4">
-      {/* 元の綺麗なCSSアニメーションをそのまま継承 */}
+    <section className="feed" aria-label="みんなの記録" style={{ maxWidth: '800px', margin: '0 auto', padding: '0 1rem' }}>
+      
+      {/* 綺麗なCSSアニメーションを定義 */}
       <style>{`
         @keyframes slideInAndDown {
-          0% {
-            opacity: 0;
-            transform: translateY(-20px);
-            max-height: 0;
-            margin-bottom: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-            max-height: 200px;
-            margin-bottom: 16px;
-          }
+          0% { opacity: 0; transform: translateY(-20px); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+          100% { opacity: 1; transform: translateY(0); max-height: 200px; margin-bottom: 16px; }
         }
-
         @keyframes softGlow {
-          0% {
-            background-color: transparent;
-            box-shadow: 0 0 0px transparent;
-          }
-          15% {
-            background-color: var(--glow-color-light);
-            box-shadow: 0 0 12px var(--glow-color);
-          }
-          100% {
-            background-color: transparent;
-            box-shadow: 0 0 0px transparent;
-          }
+          0% { background-color: transparent; box-shadow: 0 0 0px transparent; }
+          15% { background-color: var(--glow-color-light); box-shadow: 0 0 12px var(--glow-color); }
+          100% { background-color: transparent; box-shadow: 0 0 0px transparent; }
         }
-
         .new-post-animation {
-          animation: 
-            slideInAndDown 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards,
-            softGlow 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+          animation: slideInAndDown 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards, softGlow 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
           border-radius: 6px;
           overflow: hidden;
         }
-
-        .old-post-item {
-          margin-bottom: 16px;
-        }
+        .old-post-item { margin-bottom: 16px; }
       `}</style>
-      
-      {/* 📅 カレンダー（日付選択）エリア */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        marginBottom: '2rem',
-        backgroundColor: '#ffffff',
-        padding: '1rem',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-        border: '1px solid #f3f4f6'
-      }}>
-        <label style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#6b7280', marginBottom: '0.5rem' }}>
-          📅 あなたの記録を振り返る日付
-        </label>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
+
+      {/* 📅 カレンダーを開くための「優しいボタン」配置エリア */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+        <button 
+          onClick={() => setShowCalendar(!showCalendar)}
           style={{
-            padding: '0.5rem 1rem',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            fontSize: '1.125rem',
-            fontWeight: '500',
-            color: '#374151',
-            backgroundColor: '#f9fafb',
+            background: 'none',
+            border: '1px solid #e5e7eb',
+            borderRadius: '20px',
+            padding: '0.4rem 1rem',
+            fontSize: '0.875rem',
+            color: '#6b7280',
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            backgroundColor: showCalendar ? '#f3f4f6' : '#ffffff',
+            transition: 'all 0.2s ease',
             outline: 'none'
           }}
-        />
+        >
+          <span>📅</span> {showCalendar ? 'カレンダーを閉じる' : '過去の記録を振り返る'}
+        </button>
+
+        {/* ボタンを押して開いたときだけ優しく表示されるカレンダー */}
+        {showCalendar && (
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            style={{
+              padding: '0.3rem 0.6rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              color: '#374151',
+              backgroundColor: '#ffffff',
+              cursor: 'pointer',
+              outline: 'none',
+              animation: 'fadeIn 0.2s ease'
+            }}
+          />
+        )}
       </div>
 
-      {/* 📊 左右二段組のレイアウト */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+      {/* 📊 左右二段組のスッキリしたレイアウト */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1rem' }}>
         
-        {/* 左側：あなたのきろく（カレンダーと連動） */}
+        {/* 左側：あなたのきろく（カレンダーの日付と連動） */}
         <div>
-          <h3 style={{ textAlign: 'center', fontWeight: 'bold', color: '#4b5563', marginBottom: '1.5rem', paddingBottom: '0.5rem', borderBottom: '2px solid #818cf8' }}>
+          <h3 style={{ textAlign: 'center', fontSize: '1rem', fontWeight: 'bold', color: '#4b5563', marginBottom: '1.2rem', paddingBottom: '0.4rem', borderBottom: '2px solid #818cf8' }}>
             あなたのきろく
           </h3>
           {renderPostList('me')}
@@ -178,13 +161,13 @@ export default function PostFeed({ posts }) {
 
         {/* 右側：みんなのきろく（常にリアルタイム最新30件） */}
         <div>
-          <h3 style={{ textAlign: 'center', fontWeight: 'bold', color: '#4b5563', marginBottom: '1.5rem', paddingBottom: '0.5rem', borderBottom: '2px solid #34d399' }}>
+          <h3 style={{ textAlign: 'center', fontSize: '1rem', fontWeight: 'bold', color: '#4b5563', marginBottom: '1.2rem', paddingBottom: '0.4rem', borderBottom: '2px solid #34d399' }}>
             みんなのきろく（リアルタイム）
           </h3>
           {renderPostList('everyone')}
         </div>
 
       </div>
-    </div>
+    </section>
   );
 }
