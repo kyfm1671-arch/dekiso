@@ -22,39 +22,56 @@ export function usePosts() {
   const [posts, setPosts] = useState([]);
   const [myId] = useState(getOrCreateSenderId);
 
-  // 1. データベースから最新の投稿を読み込む機能
+  // 1. データベースから投稿を読み込む機能
   const fetchPosts = useCallback(async () => {
     try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc&limit=30`,
-        {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
-        }
-      );
-      if (!res.ok) throw new Error('データ取得失敗');
-      const data = await res.json();
+      // 🌟【大改造】自分の記録が押し出されないよう、URLを2つに分けて同時に取得します
       
-      const formattedPosts = data.map(post => {
+      // ① みんなの記録（全ユーザーの最新30件）
+      const urlEveryone = `${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc&limit=30`;
+      
+      // ② あなたの記録（あなた[myId]が含まれるデータだけを、件数制限なしで最大1000件取得）
+      const urlMine = `${SUPABASE_URL}/rest/v1/posts?select=*&colorHex=ilike.*${myId}*&order=created_at.desc&limit=1000`;
+
+      // 同時にデータベースへ読み込みにいきます
+      const [resEveryone, resMine] = await Promise.all([
+        fetch(urlEveryone, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
+        fetch(urlMine, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
+      ]);
+
+      if (!resEveryone.ok || !resMine.ok) throw new Error('データ取得失敗');
+
+      const dataEveryone = await resEveryone.json();
+      const dataMine = await resMine.json();
+
+      // 重複を防ぐため、2つのデータを合体させて1つのリストにします
+      const combinedRawData = [...dataMine, ...dataEveryone];
+      
+      // IDの重複を取り除く（同じデータが両方にあった場合のため）
+      const uniqueRawData = combinedRawData.filter(
+        (item, index, self) => self.findIndex(t => t.id === item.id) === index
+      );
+
+      // データの整形処理（元々のロジックをそのまま維持）
+      const formattedPosts = uniqueRawData.map(post => {
         const parts = (post.colorHex || '').split('|');
         const hex = parts[0] || '#ffffff';
         const senderId = parts[1] || 'unknown';
-        const tagsJoinedText = parts[2] || ''; // カンマ区切りのタグ文字列
+        const tagsJoinedText = parts[2] || '';
 
-        // 🌟【修正】カンマで繋がったテキストを、元のバラバラの配列に戻します
-        // 文字列が空っぽの場合は、空の配列（[]）にします
         const restoredTags = tagsJoinedText ? tagsJoinedText.split(',') : [];
 
         return {
           id: post.id,
           colorHex: hex,
-          tags: restoredTags, // 🌟これで複数タグが完全復活！
+          tags: restoredTags,
           createdAt: post.created_at,
           author: senderId === myId ? 'me' : 'everyone'
         };
       });
+
+      // 日付が新しい順にきれいに並び替えて画面にセット
+      formattedPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       setPosts(formattedPosts);
     } catch (err) {
@@ -62,7 +79,7 @@ export function usePosts() {
     }
   }, [myId]);
 
-  // 2. 定期リフレッシュの監視
+  // 2. 定期リフレッシュの監視（3秒ごとに自動更新）
   useEffect(() => {
     fetchPosts();
     const backupTimer = setInterval(fetchPosts, 3000);
@@ -73,11 +90,7 @@ export function usePosts() {
   const addPost = useCallback(async ({ colorHex, tags }) => {
     try {
       const safeTags = Array.isArray(tags) ? tags : [];
-      
-      // 🌟【修正】選ばれた複数のタグをカンマ「,」で1本に合体させます（例: "わくわく,たのしい"）
       const tagsJoinedText = safeTags.join(',');
-
-      // 「色コード | 端末ID | 複数合体タグ」の形にして送信します
       const packedData = `${colorHex}|${myId}|${tagsJoinedText}`;
 
       const bodyData = {
