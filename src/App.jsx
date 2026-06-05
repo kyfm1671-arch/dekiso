@@ -99,7 +99,7 @@ export default function App() {
                   textAlign: 'left'
                 }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                    みんなのきろく（ダミー）
+                    みんなのきろく（リアルタイム）
                   </h2>
                   <PostFeed posts={everyoneElsePosts} />
                 </section>
