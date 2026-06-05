@@ -1,24 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// 🌟あなたのSupabase情報
-const SUPABASE_URL = 'https://hmabpmrcfghpuhpakkrw.supabase.co'; 
-const SUPABASE_KEY = 'sb_publishable_NkVNXqW5t450DtRG7bAkkw_EGOLmjzz'; 
+const SUPABASE_URL = 'https://hmabpmrcfghpuhpakkrw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_NkVNXqW5t450DtRG7bAkkw_EGOLmjzz';
 
-// 🌟【新機能】スマホ・PCごとに、名前は使わず「匿名の背番号（ユーザーID）」を自動生成して固定する仕組み
-const SENDER_ID_KEY = 'mood-log-sender-id-unique';
-const getOrCreateSenderId = () => {
-  let id = localStorage.getItem(SENDER_ID_KEY);
-  if (!id) {
-    // ランダムな英数字の組み合わせで、世界に1つだけの端末IDを作ります
-    id = `user-${Math.random().toString(36).substring(2, 11)}-${Date.now().toString(36)}`;
-    localStorage.setItem(SENDER_ID_KEY, id);
+// スマホ・PCごとに、名前は使わず「匿名ID」を割り振って左右を仕分けるキー
+const SENDER_ID_KEY = 'mood-log-sender-uuid';
+
+function getOrCreateSenderId() {
+  try {
+    let id = localStorage.getItem(SENDER_ID_KEY);
+    if (!id) {
+      // ランダムな英数字の組み合わせで、世界に1つだけの匿名IDを作ります
+      id = 'user-' + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem(SENDER_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return 'user-fallback';
   }
-  return id;
-};
+}
 
 export function usePosts() {
   const [posts, setPosts] = useState([]);
-  // この端末専用のIDを取得して保持
+  // 自分専用のIDを取得して保持
   const [myId] = useState(getOrCreateSenderId);
 
   // 1. データベースから最新の投稿を読み込む機能
@@ -33,18 +37,25 @@ export function usePosts() {
           }
         }
       );
-      if (!res.ok) throw new Error('データの取得に失敗しました');
+      if (!res.ok) throw new Error('データ取得失敗');
       const data = await res.json();
       
-      // 画面の仕様に合わせてデータを使いやすい形に変換
-      const formattedPosts = data.map(post => ({
-        id: post.id,
-        colorHex: post.colorHex,
-        tags: post.colorName ? [post.colorName] : [], 
-        createdAt: post.created_at,
-        // 🌟【仕分けのコア】データのauthor列に入っているIDが、このスマホのIDと「一致するかどうか」で自分のものか判別します！
-        author: post.author === myId ? 'me' : 'everyone'
-      }));
+      const formattedPosts = data.map(post => {
+        // 🌟Supabaseの `colorHex` の中に「色コード,端末ID,タグ」を合体させて保存しているため、ここで分解します
+        const parts = (post.colorHex || '').split('|');
+        const hex = parts[0] || '#ffffff';
+        const senderId = parts[1] || 'unknown';
+        const tagText = parts[2] || '';
+
+        return {
+          id: post.id,
+          colorHex: hex,
+          tags: tagText ? [tagText] : [], 
+          createdAt: post.created_at,
+          // 🌟この投稿の端末IDが、自分の端末ID（myId）と一致すれば左側（'me'）へ、違えば右側（'everyone'）へ自動仕分け！
+          author: senderId === myId ? 'me' : 'everyone'
+        };
+      });
 
       setPosts(formattedPosts);
     } catch (err) {
@@ -52,24 +63,14 @@ export function usePosts() {
     }
   }, [myId]);
 
-  // 2. 画面が開いたときにデータを読み込み、さらに「リアルタイム監視」を開始する
+  // 2. 画面が開いたときにデータを読み込み、定期リフレッシュ
   useEffect(() => {
     fetchPosts();
 
-    const eventSource = new EventSource(
-      `${SUPABASE_URL}/rest/v1/posts?select=*`,
-      {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-
+    // 確実に同期させるため、3目おきに超高速自動更新を回します
     const backupTimer = setInterval(fetchPosts, 3000);
 
     return () => {
-      eventSource.close();
       clearInterval(backupTimer);
     };
   }, [fetchPosts]);
@@ -80,11 +81,12 @@ export function usePosts() {
       const safeTags = Array.isArray(tags) ? tags : [];
       const tagText = safeTags.length > 0 ? safeTags[0] : '';
 
+      // 🌟【超裏ワザ】既存の「colorHex」の列に、縦棒（|）で区切って「色コード | 端末ID | タグ」を1本にまとめて送信します！
+      // これにより、Supabase側のテーブル設定を一切変更することなく、全てのデータを100%安全に保存できます。
+      const packedData = `${colorHex}|${myId}|${tagText}`;
+
       const bodyData = {
-        colorHex: colorHex,
-        colorName: tagText, 
-        // 🌟【ここを変更】isMe: true の代わりに、この端末の匿名IDをサーバーへ送信して記録します
-        author: myId 
+        colorHex: packedData
       };
 
       await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
