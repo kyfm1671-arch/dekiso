@@ -40,19 +40,11 @@ export default function PostFeed({ posts }) {
   }, [posts]);
 
   // 🌟【超重要】親から渡されたpostsに「みんなの記録」が混ざっているか判定します
-  // リストの中に1件でも他人(everyone)の投稿があれば、ここは「みんなの記録」の列だと判断します。
   const isEveryoneColumn = posts.some(post => post.author === 'everyone');
 
-  // 🌟【仕分けルール】
-  // みんなの記録列なら：カレンダーは完全に無視して、届いた30件をそのまま全部出す
-  // あなたの記録列なら：カレンダーの日付と完全一致するものだけにギュッと絞り込む
-  const displayPosts = isEveryoneColumn
-    ? posts 
-    : posts.filter(post => {
-        if (!post.createdAt) return false;
-        const postDate = post.createdAt.split('T')[0];
-        return postDate === selectedDate;
-      });
+  // 🌟【リクエスト反映】まだ記録とは連携させないので、カレンダーの日付に関わらず
+  // 「あなたの記録」も「みんなの記録」も、届いたデータをそのまま100%全件表示します。
+  const displayPosts = posts;
 
   return (
     <section className="feed" aria-label="投稿リスト" style={{ width: '100%' }}>
@@ -76,9 +68,9 @@ export default function PostFeed({ posts }) {
         .old-post-item { margin-bottom: 16px; }
       `}</style>
 
-      {/* 📅 【ご希望の配置】みんなの記録（リアルタイム）の側には何も出さず、
-          あなたの記録（振り返る必要がある側）の上にだけ、スマートにカレンダーボタンを1つ出現させます */}
-      {!isEveryoneColumn && (
+      {/* 📅 【ご希望の配置】「みんなのきろく（リアルタイム）」の列の上にだけ、
+          カレンダーボタンを1つ出現させます（左側のあなたのきろく側には何も出さなくなります） */}
+      {isEveryoneColumn && (
         <div style={{ 
           display: 'flex', 
           flexDirection: 'column',
