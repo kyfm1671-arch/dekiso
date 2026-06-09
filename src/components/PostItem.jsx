@@ -2,11 +2,30 @@ import { formatPostTime } from '../utils/time.js';
 
 export default function PostItem({ post, compact = false }) {
   const isMine = post.author === 'me';
-  // 🌟 投稿の色（指定がなければデフォルトのグレー）
   const postColor = post.colorHex ?? '#c8c8c8';
 
+  // 🌟 この投稿専用のユニークな識別用クラス名を作ります（例: post-item-12345）
+  const uniqueClass = `post-item-${post.id}`;
+
   return (
-    <article className={`post-item ${compact ? 'is-compact' : ''}`}>
+    <article className={`post-item ${uniqueClass} ${compact ? 'is-compact' : ''}`}>
+      
+      {/* 🌟 index.css の color 設定を !important で完全に破壊して強制染色する設定 */}
+      <style>{`
+        .${uniqueClass} .post-meta time {
+          color: ${postColor} !important;
+          font-weight: 600 !important;
+        }
+        .${uniqueClass} .post-mine {
+          color: ${postColor} !important;
+          font-weight: 600 !important;
+        }
+        .${uniqueClass} .post-tags li {
+          color: ${postColor} !important;
+          font-weight: 600 !important;
+        }
+      `}</style>
+
       <div
         className="post-color"
         style={{ backgroundColor: postColor }}
@@ -14,33 +33,17 @@ export default function PostItem({ post, compact = false }) {
       />
       <div className="post-body">
         <div className="post-meta">
-          {/* 🌟 時間の文字色を、その投稿の色（postColor）にします */}
-          <time 
-            dateTime={post.createdAt} 
-            style={{ color: postColor, fontWeight: '500' }}
-          >
+          <time dateTime={post.createdAt}>
             {formatPostTime(post.createdAt)}
           </time>
-          
-          {/* 🌟 「自分」の文字色も、その投稿の色（postColor）にします */}
-          {isMine && (
-            <span 
-              className="post-mine" 
-              style={{ color: postColor, fontWeight: '500', marginLeft: '6px' }}
-            >
-              自分
-            </span>
-          )}
+          {isMine && <span className="post-mine">自分</span>}
         </div>
         
         {/* コンパクトではないとき（自分の記録）だけタグを表示 */}
         {!compact && post.tags && post.tags.length > 0 && (
           <ul className="post-tags">
             {post.tags.map((tag) => (
-              {/* 🌟 タグの文字色も、その投稿の色（postColor）に統一！ */}
-              <li key={tag} style={{ color: postColor, fontWeight: '500' }}>
-                {tag}
-              </li>
+              <li key={tag}>{tag}</li>
             ))}
           </ul>
         )}
