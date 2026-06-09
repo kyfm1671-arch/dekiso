@@ -1,4 +1,5 @@
-export const LIGHTNESS_STEPS = [30, 40, 50, 70, 90];
+// 🌟 修正ポイント：一番薄い「90」をカットし、文字が見やすく綺麗に映える4段階に変更しました
+export const LIGHTNESS_STEPS = [35, 48, 62, 75];
 
 function pickRandomStep() {
   return LIGHTNESS_STEPS[Math.floor(Math.random() * LIGHTNESS_STEPS.length)];
