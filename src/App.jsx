@@ -119,7 +119,7 @@ export default function App() {
                   onClick={() => setScreen('record')}
                   style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                  ← 記録画面にもどる
+                  ← きろく画面にもどる
                 </button>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
