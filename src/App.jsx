@@ -8,7 +8,7 @@ export default function App() {
   const { posts, addPost } = usePosts();
   const [palette] = useState(() => generatePalette());
   
-  // 'record' (きろく) | 'feed' (現在のタイムライン) | 'history' (過去の自分のきろく)
+  // 'record' (記録) | 'feed' (現在のタイムライン) | 'history' (過去の自分の記録)
   const [screen, setScreen] = useState('record');
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -43,7 +43,7 @@ export default function App() {
     }))
     .slice(0, 30);
 
-  // カレンダーで選んだ日付の「自分のきろくだけ」を抽出
+  // カレンダーで選んだ日付の「自分の記録だけ」を抽出
   const historyPosts = posts.filter((p) => {
     if (p.author !== 'me') return false;
     if (!p.createdAt) return false;
@@ -53,7 +53,7 @@ export default function App() {
     const postDateStr = (new Date(localDate - offset)).toISOString().split('T')[0];
 
     return postDateStr === selectedDate;
-  });
+  }).reverse();
 
   const handlePost = useCallback(
     (data) => {
@@ -63,12 +63,12 @@ export default function App() {
     [addPost]
   );
 
-  // スマホのピッカー内で日付が動かされた時は、データだけを仮保存しておく
+  // 🌟 スマホのピッカー内で日付が動かされた時は、データだけを仮保存しておく
   const handleDateChange = (e) => {
     setTempDate(e.target.value);
   };
 
-  // スマホの青いチェックマーク（完了）が押されたり、フォーカスが外れた瞬間に画面を切り替える！
+  // 🌟 スマホの青いチェックマーク（完了）が押されたり、フォーカスが外れた瞬間に画面を切り替える！
   const handleDateConfirm = () => {
     setSelectedDate(tempDate);
     setScreen('history');
@@ -82,7 +82,7 @@ export default function App() {
       <main className="main">
         <div key={screen} className="screen">
           
-          {/* 1. 【きろく画面】 */}
+          {/* 1. 【記録画面】 */}
           {screen === 'record' && (
             <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
               <PostComposer colors={palette} onPost={handlePost} />
@@ -105,8 +105,7 @@ export default function App() {
                   padding: '8px 0'
                 }}
               >
-                {/* 🌟 シンプルに「きろくを見る →」に変更しました */}
-                きろくを見る →
+                みんなのきろくを見に行く →
               </button>
             </div>
           )}
@@ -120,7 +119,7 @@ export default function App() {
                   onClick={() => setScreen('record')}
                   style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                  ← きろく画面にもどる
+                  ← 記録画面にもどる
                 </button>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -129,7 +128,7 @@ export default function App() {
                       const nextState = !showCalendar;
                       setShowCalendar(nextState);
                       if (nextState) {
-                        setTempDate(selectedDate);
+                        setTempDate(selectedDate); // 開いた時に現在の日付を同期
                       }
                     }}
                     style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', color: '#6b7280', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
@@ -137,13 +136,13 @@ export default function App() {
                     <span>📅</span> {showCalendar ? '閉じる' : '過去のきろくを振り返る'}
                   </button>
 
-                  {/* スマホの青いチェックボタンに対応したinput要素 */}
+                  {/* 🌟 スマホの青いチェックボタンに対応したinput要素 */}
                   {showCalendar && (
                     <input
                       type="date"
                       value={tempDate}
                       onChange={handleDateChange}
-                      onBlur={handleDateConfirm}
+                      onBlur={handleDateConfirm} // 🌟 青いチェックや枠外を押して閉じた瞬間に確定画面へ！
                       style={{ padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '11px', color: '#374151', backgroundColor: '#ffffff', cursor: 'pointer' }}
                     />
                   )}
@@ -160,7 +159,7 @@ export default function App() {
 
                 <section style={{ flex: '35', width: '35%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                    みんなのきろく（最新30件）
+                    みんなのきろく（リアルタイム最新 30件）
                   </h2>
                   <PostFeed posts={everyoneElsePosts} isEveryone={true} />
                 </section>
