@@ -21,8 +21,22 @@ export default function App() {
     return (new Date(today - offset)).toISOString().split('T')[0];
   });
 
-  // 【あなたのきろく】タグも100%そのまま残して表示
-  const myPosts = posts.filter((p) => p.author === 'me');
+  // 🌟【ここを修正】「あなたのきろく」は、今日の日付のものだけに絞り込みます
+  const myPosts = posts.filter((p) => {
+    if (p.author !== 'me') return false;
+    if (!p.createdAt) return false;
+
+    // 現在の「今日の日付（YYYY-MM-DD）」を取得
+    const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+
+    // 投稿の日付（YYYY-MM-DD）を取得
+    const localDate = new Date(p.createdAt);
+    const offset = localDate.getTimezoneOffset() * 60000;
+    const postDateStr = (new Date(localDate - offset)).toISOString().split('T')[0];
+
+    // 今日の日付と一致するものだけを返す
+    return postDateStr === todayStr;
+  });
   
   // 【みんなのきろく】タグの情報を空っぽにして色のみの共有にする
   const everyoneElsePosts = posts.map((p) => ({
@@ -67,13 +81,11 @@ export default function App() {
           
           {/* =========================================================
               1. 【記録画面】
-                 🌟 閲覧画面へ切り替えるための setScreen を渡せるようにしました
              ========================================================= */}
           {screen === 'record' && (
             <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
               <PostComposer colors={palette} onPost={handlePost} />
               
-              {/* 🌟「記録する」ボタンの下に表示される、閲覧画面への移動ボタン */}
               <button
                 onClick={() => setScreen('feed')}
                 style={{
@@ -92,7 +104,7 @@ export default function App() {
                   padding: '8px 0'
                 }}
               >
-                きろくをみる →
+                みんなのきろくを見に行く →
               </button>
             </div>
           )}
@@ -135,7 +147,7 @@ export default function App() {
               <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '24px', width: '100%' }}>
                 <section style={{ flex: '65', width: '65%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                    あなたのきろく
+                    あなたのきろく（今日）
                   </h2>
                   <PostFeed posts={myPosts} />
                 </section>
@@ -173,7 +185,7 @@ export default function App() {
                   {selectedDate.replace(/-/g, '/')} のあなたのきろく
                 </h2>
                 <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                  カレンダーで選択した日の, あなただけの振り返りページです
+                  カレンダーで選択した日の、あなただけの振り返りページです
                 </p>
               </div>
 
