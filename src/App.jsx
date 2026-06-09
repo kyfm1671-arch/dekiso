@@ -8,10 +8,8 @@ export default function App() {
   const { posts, addPost } = usePosts();
   const [palette] = useState(() => generatePalette());
   
-  // 画面の状態管理
   // 'record' (記録) | 'feed' (現在のタイムライン) | 'history' (過去の自分の記録)
   const [screen, setScreen] = useState('record');
-
   const [showCalendar, setShowCalendar] = useState(false);
 
   // 選択された日付（初期値は今日）
@@ -21,15 +19,15 @@ export default function App() {
     return (new Date(today - offset)).toISOString().split('T')[0];
   });
 
+  // 一時的に日付を保存しておくためのステート（スマホのピッカー操作用）
+  const [tempDate, setTempDate] = useState(selectedDate);
+
   // 【あなたのきろく】今日の日付のものだけに絞り込み
   const myPosts = posts.filter((p) => {
     if (p.author !== 'me') return false;
     if (!p.createdAt) return false;
 
-    // 現在の「今日の日付（YYYY-MM-DD）」を取得
     const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
-
-    // 投稿の日付（YYYY-MM-DD）を取得
     const localDate = new Date(p.createdAt);
     const offset = localDate.getTimezoneOffset() * 60000;
     const postDateStr = (new Date(localDate - offset)).toISOString().split('T')[0];
@@ -37,14 +35,13 @@ export default function App() {
     return postDateStr === todayStr;
   });
   
-  // 🌟【ここを修正：みんなのきろく】
-  // タグ情報を消去して色のみにした上で、最新の「30件まで」に制限します。
+  // 【みんなのきろく】タグ情報を消去して色のみ、最新30件に制限
   const everyoneElsePosts = posts
     .map((p) => ({
       ...p,
-      tags: [] // タグを強制的に空の配列にする
+      tags: []
     }))
-    .slice(0, 30); // 🌟 新しい順に並んでいるデータの上位30件だけを切り取る
+    .slice(0, 30);
 
   // カレンダーで選んだ日付の「自分の記録だけ」を抽出
   const historyPosts = posts.filter((p) => {
@@ -66,10 +63,14 @@ export default function App() {
     [addPost]
   );
 
-  // カレンダーの日付がタップされたときの処理
+  // 🌟 スマホのピッカー内で日付が動かされた時は、データだけを仮保存しておく
   const handleDateChange = (e) => {
-    const newDate = e.target.value;
-    setSelectedDate(newDate);
+    setTempDate(e.target.value);
+  };
+
+  // 🌟 スマホの青いチェックマーク（完了）が押されたり、フォーカスが外れた瞬間に画面を切り替える！
+  const handleDateConfirm = () => {
+    setSelectedDate(tempDate);
     setScreen('history');
   };
 
@@ -81,9 +82,7 @@ export default function App() {
       <main className="main">
         <div key={screen} className="screen">
           
-          {/* =========================================================
-              1. 【記録画面】
-             ========================================================= */}
+          {/* 1. 【記録画面】 */}
           {screen === 'record' && (
             <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
               <PostComposer colors={palette} onPost={handlePost} />
@@ -111,13 +110,10 @@ export default function App() {
             </div>
           )}
 
-          {/* =========================================================
-              2. 【通常の参照画面（feed）】 
-             ========================================================= */}
+          {/* 2. 【通常の参照画面（feed）】 */}
           {screen === 'feed' && (
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 8px', width: '100%', boxSizing: 'border-box' }}>
               
-              {/* もどるボタン と カレンダーボタン */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '0 4px' }}>
                 <button 
                   onClick={() => setScreen('record')}
@@ -128,47 +124,50 @@ export default function App() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button 
-                    onClick={() => setShowCalendar(!showCalendar)}
+                    onClick={() => {
+                      const nextState = !showCalendar;
+                      setShowCalendar(nextState);
+                      if (nextState) {
+                        setTempDate(selectedDate); // 開いた時に現在の日付を同期
+                      }
+                    }}
                     style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', color: '#6b7280', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
                   >
                     <span>📅</span> {showCalendar ? '閉じる' : '過去のきろくを振り返る'}
                   </button>
 
+                  {/* 🌟 スマホの青いチェックボタンに対応したinput要素 */}
                   {showCalendar && (
                     <input
                       type="date"
-                      value={selectedDate}
+                      value={tempDate}
                       onChange={handleDateChange}
-                      style={{ padding: '2px 6px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '11px', color: '#374151', backgroundColor: '#ffffff', cursor: 'pointer' }}
+                      onBlur={handleDateConfirm} // 🌟 青いチェックや枠外を押して閉じた瞬間に確定画面へ！
+                      style={{ padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '11px', color: '#374151', backgroundColor: '#ffffff', cursor: 'pointer' }}
                     />
                   )}
                 </div>
               </div>
 
-              {/* 左右の比率（65% : 35%）の記録エリア */}
               <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '24px', width: '100%' }}>
                 <section style={{ flex: '65', width: '65%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     あなたのきろく（今日）
                   </h2>
-                  <PostFeed posts={myPosts} />
+                  <PostFeed posts={myPosts} isEveryone={false} />
                 </section>
 
                 <section style={{ flex: '35', width: '35%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                    みんなのきろく(最新30件)
-                  
+                    みんなのきろく（リアルタイム最新 30件）
                   </h2>
-                  <PostFeed posts={everyoneElsePosts} isEveryone={true}
-               />
+                  <PostFeed posts={everyoneElsePosts} isEveryone={true} />
                 </section>
               </div>
             </div>
           )}
 
-          {/* =========================================================
-              3. 【別画面：指定日の自分のきろく】
-             ========================================================= */}
+          {/* 3. 【別画面：指定日の自分のきろく】 */}
           {screen === 'history' && (
             <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
               
@@ -194,7 +193,7 @@ export default function App() {
               </div>
 
               <div style={{ marginTop: '16px' }}>
-                <PostFeed posts={historyPosts} />
+                <PostFeed posts={historyPosts} isEveryone={false} />
               </div>
             </div>
           )}
