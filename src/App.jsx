@@ -21,17 +21,22 @@ export default function App() {
     return (new Date(today - offset)).toISOString().split('T')[0];
   });
 
-  // 通常の画面用の仕分け
+  // 🌟【あなたのきろく】は、自分のものなのでタグも100%そのまま残して表示
   const myPosts = posts.filter((p) => p.author === 'me');
-  const everyoneElsePosts = posts;
+  
+  // 🌟【みんなのきろく（リクエスト反映）】
+  // 自分も含めた全データから、安全に「タグ（tags）の情報だけを空っぽにした新しいリスト」をその場で作ります。
+  // これにより、右側のタイムラインは完全に「色だけの共有」になります。
+  const everyoneElsePosts = posts.map((p) => ({
+    ...p,
+    tags: [] // タグを強制的に空の配列にする
+  }));
 
-  // 🌟【時差バグ修正版】カレンダーで選んだ日付の「自分の記録だけ」を抽出する
+  // 【時差バグ修正版】カレンダーで選んだ日付の「自分の記録だけ」を抽出する（タグは残ります）
   const historyPosts = posts.filter((p) => {
-    // 自分の投稿であること
     if (p.author !== 'me') return false;
     if (!p.createdAt) return false;
     
-    // 💡【ここを修正】世界標準時への自動変換を防ぎ、日本時間のまま「YYYY-MM-DD」を取り出します
     const localDate = new Date(p.createdAt);
     const offset = localDate.getTimezoneOffset() * 60000;
     const postDateStr = (new Date(localDate - offset)).toISOString().split('T')[0];
@@ -76,7 +81,7 @@ export default function App() {
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 8px', width: '100%', boxSizing: 'border-box' }}>
               
               {/* もどるボタン と カレンダーボタン */}
-              <div style={{ display: 'flex', justifycontent: 'space-between', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '0 4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '0 4px' }}>
                 <button 
                   onClick={() => setScreen('record')}
                   style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -116,6 +121,7 @@ export default function App() {
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     みんなのきろく（リアルタイム）
                   </h2>
+                  {/* 🌟 タグ情報を消去した everyoneElsePosts を渡して色だけにします */}
                   <PostFeed posts={everyoneElsePosts} />
                 </section>
               </div>
