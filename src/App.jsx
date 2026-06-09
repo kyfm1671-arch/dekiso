@@ -105,7 +105,7 @@ export default function App() {
                   padding: '8px 0'
                 }}
               >
-                みんなのきろくを見に行く →
+                きろくを見る →
               </button>
             </div>
           )}
@@ -119,7 +119,7 @@ export default function App() {
                   onClick={() => setScreen('record')}
                   style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                  ← 記録画面にもどる
+                  ← きろく画面にもどる
                 </button>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -159,7 +159,7 @@ export default function App() {
 
                 <section style={{ flex: '35', width: '35%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                    みんなのきろく（リアルタイム最新 30件）
+                    みんなのきろく（最新30件）
                   </h2>
                   <PostFeed posts={everyoneElsePosts} isEveryone={true} />
                 </section>
