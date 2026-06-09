@@ -16,11 +16,14 @@ export default function PostItem({ post, compact = false }) {
           {isMine && <span className="post-mine">自分</span>}
         </div>
         
-        {/* コンパクト（みんなの記録）ではないときだけタグを表示 */}
+        {/* コンパクト（みんなのきろく）ではないときだけタグを表示 */}
         {!compact && post.tags && post.tags.length > 0 && (
           <ul className="post-tags">
             {post.tags.map((tag) => (
-              <li key={tag}>{tag}</li>
+              /* 🌟 ここ！タグの文字色だけをきろくの色（無ければデフォルト色）にします */
+              <li key={tag} style={{ color: post.colorHex ?? '#3a3a3a' }}>
+                {tag}
+              </li>
             ))}
           </ul>
         )}
