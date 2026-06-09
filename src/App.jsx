@@ -21,7 +21,7 @@ export default function App() {
     return (new Date(today - offset)).toISOString().split('T')[0];
   });
 
-  // 🌟【ここを修正】「あなたのきろく」は、今日の日付のものだけに絞り込みます
+  // 【あなたのきろく】今日の日付のものだけに絞り込み
   const myPosts = posts.filter((p) => {
     if (p.author !== 'me') return false;
     if (!p.createdAt) return false;
@@ -34,15 +34,17 @@ export default function App() {
     const offset = localDate.getTimezoneOffset() * 60000;
     const postDateStr = (new Date(localDate - offset)).toISOString().split('T')[0];
 
-    // 今日の日付と一致するものだけを返す
     return postDateStr === todayStr;
   });
   
-  // 【みんなのきろく】タグの情報を空っぽにして色のみの共有にする
-  const everyoneElsePosts = posts.map((p) => ({
-    ...p,
-    tags: []
-  }));
+  // 🌟【ここを修正：みんなのきろく】
+  // タグ情報を消去して色のみにした上で、最新の「30件まで」に制限します。
+  const everyoneElsePosts = posts
+    .map((p) => ({
+      ...p,
+      tags: [] // タグを強制的に空の配列にする
+    }))
+    .slice(0, 30); // 🌟 新しい順に並んでいるデータの上位30件だけを切り取る
 
   // カレンダーで選んだ日付の「自分の記録だけ」を抽出
   const historyPosts = posts.filter((p) => {
@@ -154,7 +156,7 @@ export default function App() {
 
                 <section style={{ flex: '35', width: '35%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                    みんなのきろく（リアルタイム）
+                    みんなのきろく（リアルタイム最新30件）
                   </h2>
                   <PostFeed posts={everyoneElsePosts} />
                 </section>
