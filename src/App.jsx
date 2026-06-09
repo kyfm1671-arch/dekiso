@@ -105,7 +105,8 @@ export default function App() {
                   padding: '8px 0'
                 }}
               >
-                みんなのきろくを見に行く →
+                {/* 🌟 シンプルに「きろくを見る →」に変更しました */}
+                きろくを見る →
               </button>
             </div>
           )}
@@ -128,7 +129,7 @@ export default function App() {
                       const nextState = !showCalendar;
                       setShowCalendar(nextState);
                       if (nextState) {
-                        setTempDate(selectedDate); // 開いた時に現在の日付を同期
+                        setTempDate(selectedDate);
                       }
                     }}
                     style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', color: '#6b7280', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
@@ -142,7 +143,7 @@ export default function App() {
                       type="date"
                       value={tempDate}
                       onChange={handleDateChange}
-                      onBlur={handleDateConfirm} // 青いチェックや枠外を押して閉じた瞬間に確定画面へ！
+                      onBlur={handleDateConfirm}
                       style={{ padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: '20px', fontSize: '11px', color: '#374151', backgroundColor: '#ffffff', cursor: 'pointer' }}
                     />
                   )}
@@ -158,7 +159,6 @@ export default function App() {
                 </section>
 
                 <section style={{ flex: '35', width: '35%', minWidth: '0', textAlign: 'left' }}>
-                  {/* 🌟 ここを「みんなのきろく（最新30件）」に変更しました */}
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     みんなのきろく（最新30件）
                   </h2>
