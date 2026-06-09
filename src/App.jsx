@@ -105,7 +105,7 @@ export default function App() {
                   padding: '8px 0'
                 }}
               >
-                みんなのきろくを見に行く →
+                きろくを見る →
               </button>
             </div>
           )}
