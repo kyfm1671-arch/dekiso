@@ -66,10 +66,35 @@ export default function App() {
         <div key={screen} className="screen">
           
           {/* =========================================================
-              1. 【記録画面】 
+              1. 【記録画面】
+                 🌟 閲覧画面へ切り替えるための setScreen を渡せるようにしました
              ========================================================= */}
           {screen === 'record' && (
-            <PostComposer colors={palette} onPost={handlePost} />
+            <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
+              <PostComposer colors={palette} onPost={handlePost} />
+              
+              {/* 🌟「記録する」ボタンの下に表示される、閲覧画面への移動ボタン */}
+              <button
+                onClick={() => setScreen('feed')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#888',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  marginTop: '20px',
+                  textDecoration: 'underline',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  width: '100%',
+                  justifyContent: 'center',
+                  padding: '8px 0'
+                }}
+              >
+                きろくをみる →
+              </button>
+            </div>
           )}
 
           {/* =========================================================
@@ -106,40 +131,21 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 📊 左右の比率を「広め : 狭め」に変更した記録エリア */}
-              <div style={{
-                display: 'flex',
-                flexWrap: 'nowrap',
-                gap: '24px', // 🌟 少しだけ左右の間隔を広げて見やすくしました
-                width: '100%'
-              }}>
-                
-                {/* 👈 左側：あなたのきろく（全体の 65% に拡大） */}
-                <section style={{ 
-                  flex: '65', 
-                  width: '65%',
-                  minWidth: '0',
-                  textAlign: 'left'
-                }}>
+              {/* 左右の比率（65% : 35%）の記録エリア */}
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '24px', width: '100%' }}>
+                <section style={{ flex: '65', width: '65%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     あなたのきろく
                   </h2>
                   <PostFeed posts={myPosts} />
                 </section>
 
-                {/* 👉 右側：みんなのきろく（全体の 35% に縮小） */}
-                <section style={{ 
-                  flex: '35', 
-                  width: '35%',
-                  minWidth: '0',
-                  textAlign: 'left'
-                }}>
+                <section style={{ flex: '35', width: '35%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     みんなのきろく（リアルタイム）
                   </h2>
                   <PostFeed posts={everyoneElsePosts} />
                 </section>
-
               </div>
             </div>
           )}
@@ -167,7 +173,7 @@ export default function App() {
                   {selectedDate.replace(/-/g, '/')} のあなたのきろく
                 </h2>
                 <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                  カレンダーで選択した日の、あなただけの振り返りページです
+                  カレンダーで選択した日の, あなただけの振り返りページです
                 </p>
               </div>
 
