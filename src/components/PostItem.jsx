@@ -4,70 +4,55 @@ export default function PostItem({ post, compact = false }) {
   const isMine = post.author === 'me';
 
   return (
-    <article className={`post-item ${compact ? 'is-compact' : ''}`}>
-      
-      {/* 🌟 構文エラーを完璧に修正したコンパクト専用CSS設定 */}
-      {compact && (
-        <style>{`
-          /* 1. みんなのきろく（is-compact）全体の高さを限界まで引き締める */
-          .post-item.is-compact {
-            padding-top: 4px !important;
-            padding-bottom: 4px !important;
-            padding-left: 12px !important;
-            padding-right: 12px !important;
-            margin-bottom: 0px !important;
-            min-height: 0px !important;
-            height: 32px !important; /* 🌟 縦幅を32pxにガチッと固定します */
-            display: flex !important;
-            align-items: center !important;
-          }
-
-          /* 2. 左側のカラーバーをマスの高さ（32px）に合わせて小さく */
-          .post-item.is-compact .post-color {
-            height: 18px !important;
-            width: 6px !important;
-            margin: 0 !important;
-          }
-
-          /* 3. 中の余白をリセットして垂直中央に配置 */
-          .post-item.is-compact .post-body {
-            padding: 0 !important;
-            margin: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-          }
-
-          .post-item.is-compact .post-meta {
-            margin: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-          }
-
-          /* 4. 時間の文字サイズを脇役らしくすっきり小さく */
-          .post-item.is-compact time {
-            font-size: 11px !important;
-            color: #6b7280 !important;
-            line-height: 1 !important;
-          }
-
-          /* 自分ラベルの隙間を微調整 */
-          .post-item.is-compact .post-mine {
-            margin-left: 6px !important;
-            font-size: 10px !important;
-            padding: 1px 4px !important;
-          }
-        `}</style>
-      )}
-
+    <article 
+      className={`post-item ${compact ? 'is-compact' : ''}`}
+      // 🌟 compact（みんなの記録）のときは、index.cssの padding: 16px 0 を強制上書きします
+      style={compact ? {
+        paddingTop: '6px',
+        paddingBottom: '6px',
+        paddingLeft: '0px',
+        paddingRight: '0px',
+        marginTop: '0px',
+        marginBottom: '0px',
+        height: '32px', // 🌟 高さを32pxにギュッと固定
+        display: 'flex',
+        alignItems: 'center',
+        boxSizing: 'border-box'
+      } : {}}
+    >
       <div
         className="post-color"
-        style={{ backgroundColor: post.colorHex ?? '#c8c8c8' }}
+        // 🌟 index.css の min-height: 40px を「minHeight: '0px'」で完全に無効化します！
+        style={{ 
+          backgroundColor: post.colorHex ?? '#c8c8c8',
+          minHeight: compact ? '0px' : undefined, 
+          height: compact ? '20px' : undefined, // カラーバーをスマートに
+          width: compact ? '6px' : undefined
+        }}
         aria-hidden
       />
-      <div className="post-body">
-        <div className="post-meta">
-          <time dateTime={post.createdAt}>{formatPostTime(post.createdAt)}</time>
-          {isMine && <span className="post-mine">自分</span>}
+      <div 
+        className="post-body"
+        style={compact ? { padding: '0', margin: '0', display: 'flex', alignItems: 'center' } : {}}
+      >
+        <div 
+          className="post-meta"
+          style={compact ? { margin: '0', display: 'flex', alignItems: 'center' } : {}}
+        >
+          <time 
+            dateTime={post.createdAt}
+            style={compact ? { fontSize: '12px', color: '#888', lineHeight: '1' } : {}}
+          >
+            {formatPostTime(post.createdAt)}
+          </time>
+          {isMine && (
+            <span 
+              className="post-mine"
+              style={compact ? { fontSize: '10px', marginLeft: '6px' } : {}}
+            >
+              自分
+            </span>
+          )}
         </div>
         
         {/* 自分の記録のときだけタグを表示 */}
