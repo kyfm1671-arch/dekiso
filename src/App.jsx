@@ -21,18 +21,16 @@ export default function App() {
     return (new Date(today - offset)).toISOString().split('T')[0];
   });
 
-  // 🌟【あなたのきろく】は、自分のものなのでタグも100%そのまま残して表示
+  // 【あなたのきろく】タグも100%そのまま残して表示
   const myPosts = posts.filter((p) => p.author === 'me');
   
-  // 🌟【みんなのきろく（リクエスト反映）】
-  // 自分も含めた全データから、安全に「タグ（tags）の情報だけを空っぽにした新しいリスト」をその場で作ります。
-  // これにより、右側のタイムラインは完全に「色だけの共有」になります。
+  // 【みんなのきろく】タグの情報を空っぽにして色のみの共有にする
   const everyoneElsePosts = posts.map((p) => ({
     ...p,
-    tags: [] // タグを強制的に空の配列にする
+    tags: []
   }));
 
-  // 【時差バグ修正版】カレンダーで選んだ日付の「自分の記録だけ」を抽出する（タグは残ります）
+  // カレンダーで選んだ日付の「自分の記録だけ」を抽出
   const historyPosts = posts.filter((p) => {
     if (p.author !== 'me') return false;
     if (!p.createdAt) return false;
@@ -52,11 +50,11 @@ export default function App() {
     [addPost]
   );
 
-  // カレンダーの日付がタップ（変更）されたときの処理
+  // カレンダーの日付がタップされたときの処理
   const handleDateChange = (e) => {
     const newDate = e.target.value;
-    setSelectedDate(newDate);   // 日付を更新
-    setScreen('history');       // 過去の自分の記録画面にジャンプ
+    setSelectedDate(newDate);
+    setScreen('history');
   };
 
   return (
@@ -108,22 +106,40 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 左右のきろくエリア */}
-              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '12px', width: '100%' }}>
-                <section style={{ flex: '1', width: '50%', minWidth: '0', textAlign: 'left' }}>
+              {/* 📊 左右の比率を「広め : 狭め」に変更した記録エリア */}
+              <div style={{
+                display: 'flex',
+                flexWrap: 'nowrap',
+                gap: '24px', // 🌟 少しだけ左右の間隔を広げて見やすくしました
+                width: '100%'
+              }}>
+                
+                {/* 👈 左側：あなたのきろく（全体の 65% に拡大） */}
+                <section style={{ 
+                  flex: '65', 
+                  width: '65%',
+                  minWidth: '0',
+                  textAlign: 'left'
+                }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     あなたのきろく
                   </h2>
                   <PostFeed posts={myPosts} />
                 </section>
 
-                <section style={{ flex: '1', width: '50%', minWidth: '0', textAlign: 'left' }}>
+                {/* 👉 右側：みんなのきろく（全体の 35% に縮小） */}
+                <section style={{ 
+                  flex: '35', 
+                  width: '35%',
+                  minWidth: '0',
+                  textAlign: 'left'
+                }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     みんなのきろく（リアルタイム）
                   </h2>
-                  {/* 🌟 タグ情報を消去した everyoneElsePosts を渡して色だけにします */}
                   <PostFeed posts={everyoneElsePosts} />
                 </section>
+
               </div>
             </div>
           )}
@@ -134,30 +150,18 @@ export default function App() {
           {screen === 'history' && (
             <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
               
-              {/* リアルタイム画面に戻るボタン */}
               <div style={{ textAlign: 'left', marginBottom: '24px' }}>
                 <button 
                   onClick={() => {
-                    setShowCalendar(false); // カレンダーを閉じる
-                    setScreen('feed');      // タイムライン画面に戻る
+                    setShowCalendar(false);
+                    setScreen('feed');
                   }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#888',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '8px 0'
-                  }}
+                  style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '8px 0' }}
                 >
                   ← リアルタイムの画面にもどる
                 </button>
               </div>
 
-              {/* 指定された日付のタイトル */}
               <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
                   {selectedDate.replace(/-/g, '/')} のあなたのきろく
@@ -167,7 +171,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* 抽出した指定日の自分の記録だけを表示 */}
               <div style={{ marginTop: '16px' }}>
                 <PostFeed posts={historyPosts} />
               </div>
