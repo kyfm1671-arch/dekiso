@@ -156,7 +156,8 @@ export default function App() {
 
                 <section style={{ flex: '35', width: '35%', minWidth: '0', textAlign: 'left' }}>
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
-                    みんなのきろく（リアルタイム最新30件）
+                    みんなのきろく(さいしん30件)
+                  
                   </h2>
                   <PostFeed posts={everyoneElsePosts} isEveryone={true}
                />
