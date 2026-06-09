@@ -4,13 +4,13 @@ export default function PostItem({ post, compact = false }) {
   const isMine = post.author === 'me';
   const postColor = post.colorHex ?? '#c8c8c8';
 
-  // 🌟 この投稿専用のユニークな識別用クラス名を作ります（例: post-item-12345）
+  // 投稿専用のユニークな識別用クラス名
   const uniqueClass = `post-item-${post.id}`;
 
   return (
     <article className={`post-item ${uniqueClass} ${compact ? 'is-compact' : ''}`}>
       
-      {/* 🌟 index.css の color 設定を !important で完全に破壊して強制染色する設定 */}
+      {/* index.css の color 設定を !important で強制染色 */}
       <style>{`
         .${uniqueClass} .post-meta time {
           color: ${postColor} !important;
@@ -36,7 +36,9 @@ export default function PostItem({ post, compact = false }) {
           <time dateTime={post.createdAt}>
             {formatPostTime(post.createdAt)}
           </time>
-          {isMine && <span className="post-mine">自分</span>}
+          
+          {/* 🌟 修正ポイント：compact（みんなのきろく）の時、かつ自分(isMine)の時だけ「自分」を表示します */}
+          {compact && isMine && <span className="post-mine">自分</span>}
         </div>
         
         {/* コンパクトではないとき（自分の記録）だけタグを表示 */}
