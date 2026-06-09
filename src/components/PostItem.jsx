@@ -5,31 +5,56 @@ export default function PostItem({ post, compact = false }) {
 
   return (
     <article className={`post-item ${compact ? 'is-compact' : ''}`}>
-      {/* 🌟 強制的にサイズを小さくするための専用CSSスタイルシートをここに埋め込みます */}
+      
+      {/* 🌟 構文エラーを完璧に修正したコンパクト専用CSS設定 */}
       {compact && (
         <style>{`
-          /* みんなのきろく（is-compact）全体の縦幅をきゅっと縮める */
+          /* 1. みんなのきろく（is-compact）全体の高さを限界まで引き締める */
           .post-item.is-compact {
             padding-top: 4px !important;
             padding-bottom: 4px !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
             margin-bottom: 0px !important;
-            min-height: auto !important;
-            height: 32px !important; /* 🌟 1マスの高さを32pxに固定します */
+            min-height: 0px !important;
+            height: 32px !important; /* 🌟 縦幅を32pxにガチッと固定します */
+            display: flex !important;
+            align-items: center !important;
           }
-          /* 左側のカラーバーもマスの高さに合わせて短く */
+
+          /* 2. 左側のカラーバーをマスの高さ（32px）に合わせて小さく */
           .post-item.is-compact .post-color {
             height: 18px !important;
-          }
-          /* 中の文字の位置を中央に揃え、文字サイズを小さく */
-          .post-item.is-compact .post-body {
-            padding: 0 !important;
-          }
-          .post-item.is-compact .post-meta {
+            width: 6px !important;
             margin: 0 !important;
           }
+
+          /* 3. 中の余白をリセットして垂直中央に配置 */
+          .post-item.is-compact .post-body {
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+          }
+
+          .post-item.is-compact .post-meta {
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+          }
+
+          /* 4. 時間の文字サイズを脇役らしくすっきり小さく */
           .post-item.is-compact time {
             font-size: 11px !important;
             color: #6b7280 !important;
+            line-height: 1 !important;
+          }
+
+          /* 自分ラベルの隙間を微調整 */
+          .post-item.is-compact .post-mine {
+            margin-left: 6px !important;
+            font-size: 10px !important;
+            padding: 1px 4px !important;
           }
         `}</style>
       )}
