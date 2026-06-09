@@ -4,7 +4,6 @@ export default function PostItem({ post, compact = false }) {
   const isMine = post.author === 'me';
 
   return (
-    // compactの時はクラス名に 'is-compact' を付与（不要なインラインは削除してスッキリ）
     <article className={`post-item ${compact ? 'is-compact' : ''}`}>
       <div
         className="post-color"
@@ -17,8 +16,8 @@ export default function PostItem({ post, compact = false }) {
           {isMine && <span className="post-mine">自分</span>}
         </div>
         
-        {/* 自分の記録（コンパクトじゃない時）だけタグを表示 */}
-        {!compact && post.tags.length > 0 && (
+        {/* コンパクト（みんなの記録）ではないときだけタグを表示 */}
+        {!compact && post.tags && post.tags.length > 0 && (
           <ul className="post-tags">
             {post.tags.map((tag) => (
               <li key={tag}>{tag}</li>

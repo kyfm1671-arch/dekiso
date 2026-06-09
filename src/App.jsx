@@ -158,7 +158,8 @@ export default function App() {
                   <h2 style={{ fontSize: '11px', fontWeight: '400', letterSpacing: '1px', color: '#888', marginBottom: '12px', borderBottom: '1px solid #eaeaea', paddingBottom: '6px', whiteSpace: 'nowrap' }}>
                     みんなのきろく（リアルタイム最新30件）
                   </h2>
-                  <PostFeed posts={everyoneElsePosts} />
+                  <PostFeed posts={everyoneElsePosts} isEveryone={true}
+               />
                 </section>
               </div>
             </div>
