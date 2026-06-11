@@ -33,7 +33,7 @@ export default function PostComposer({ colors, onPost }) {
   };
 
   return (
-    <section className="composer" aria-label="記録する">
+    <section className="composer" aria-label="きろくする">
       <ColorPicker
         colors={colors}
         selectedId={colorId}
@@ -48,7 +48,7 @@ export default function PostComposer({ colors, onPost }) {
         onClick={handlePost}
         disabled={!canPost}
       >
-        {posted ? '記録した' : '記録する'}
+        {posted ? 'きろくした' : 'きろくする'}
       </button>
     </section>
   );
